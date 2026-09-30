@@ -1,15 +1,15 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-09-30T06:24:00.480823Z",
-  "asOf": "2026-09-30T06:24:00.478048Z",
+  "generatedAt": "2026-09-30T15:57:03.336811Z",
+  "asOf": "2026-09-30T15:57:03.331847Z",
   "status": "awaiting_mature_periods",
   "counts": {
-    "issuances": 1,
-    "temperatureForecasts": 90,
+    "issuances": 2,
+    "temperatureForecasts": 180,
     "verified": 0,
-    "pending": 90,
+    "pending": 180,
     "missingObservations": 0,
-    "archivedLate": 10,
+    "archivedLate": 20,
     "invalidAsOf": 0
   },
   "minimumLatencyDays": 3,
@@ -878,7 +878,7 @@
         }
       ]
     },
-    "auditPairCount": 90,
+    "auditPairCount": 180,
     "auditNote": "Per-forecast rows omitted from public summary. Re-run identical immutable archive with --include-pairs for full native-grid coordinates, actual daily source dates, missing dates, archive timing and errors. Source revisions are identified by changed response SHA256."
   },
   "precipitation": {
@@ -907,7 +907,7 @@
     "Bias is forecast minus observed proxy, so positive bias means warmer forecasts. Each verified forecast-location-week receives equal weight; overlapping runs and shared grid points are not independent.",
     "Only raw temperature p50 is evaluated. Anomalies, tail probabilities and ENSO contribution are not evaluated. Days 57–60 are a partial four-day period and are excluded from week1–8 diagnostics.",
     "Metrics describe deviations in the archived forecasts, not calibrated predictive uncertainty or a comparison against competing models.",
-    "10 forecast-location periods were first archived after their valid window began; they are flagged and cannot be claimed as strictly prospective issue-time captures.",
+    "20 forecast-location periods were first archived after their valid window began; they are flagged and cannot be claimed as strictly prospective issue-time captures.",
     "Some locations use the same native forecast grid point; their errors are duplicates, not independent evidence: Sacramento, San Francisco"
   ],
   "archiveProvenance": [
@@ -917,12 +917,19 @@
       "path": "2026092900.json",
       "sha256": "71e41a9e90167ff598b1e5f919e7e2c61f58c228e3bd2de17b5981376d45dea9",
       "sourceProductSha256": "34e1a766114ec29298917defd26110f0d16921e7938baddf2f2291b7e60ed9f2"
+    },
+    {
+      "run": "2026-09-30T00:00:00+00:00",
+      "archivedAt": "2026-09-30T15:57:03.142376+00:00",
+      "path": "2026093000.json",
+      "sha256": "fa6da4b895b2f6df119bc97de92b7400a450ecc8351c4efcfd57257f1ab1826d",
+      "sourceProductSha256": "0df5682be98f0058dd980ca79a81591ca91b0cdf281e8ef92a29d8580a6e224c"
     }
   ],
   "verificationRecipe": {
     "scriptSha256": "50c325b23bac53e1aca6ba7e75320079ad865ad18bcea0da91ba4d1a8f1a3d9e",
     "minimumLatencyDays": 3,
-    "asOf": "2026-09-30T06:24:00.478048Z",
+    "asOf": "2026-09-30T15:57:03.331847Z",
     "fullPairsIncluded": false,
     "maxActiveIssuances": 400,
     "networkBudgetSeconds": 240,
