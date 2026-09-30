@@ -1,13 +1,13 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-09-30T04:55:01.887110+00:00",
+  "generatedAt": "2026-09-30T04:58:52.266379+00:00",
   "files": {
     "cfs-weekly-raw-60days.json": {
-      "sha256": "5d2b67550727fde089918cca216c10b143ca640cd000090599e8329d93afda37",
+      "sha256": "2b9d2b77dfb033c3dfaa1c62ae99a2c5a9c48be42da6cd3e9541ca6a59ba52a3",
       "bytes": 53169
     },
     "cfs-weekly-anomalies.json": {
-      "sha256": "b621ee67be2f6d29ed4f01fd96aa85b9f467a7f292408bc11a1952fa93a7ac90",
+      "sha256": "b48f7ce29194ef500aa710640aa10f775c5366b4f6d1b60ad96185401e46f8f4",
       "bytes": 17973
     },
     "enso-observations.json": {
@@ -15,11 +15,11 @@
       "bytes": 17462
     },
     "ensemble-percentiles.json": {
-      "sha256": "fee92a4aaa0d72c14c9b16380f09a3af1b7eab2a974f4dadfa7c54fbdf5380be",
+      "sha256": "94ad7465f3106e2e420ce3e4ad1b2ef1e4b4461fe5f0a4abbd02c0e152168cfd",
       "bytes": 167889
     },
     "verification.json": {
-      "sha256": "5bf138c779319bbc7f6aa79507e4fd7b7492d07a0b8112e86d43b56f2f4cca50",
+      "sha256": "89e0af62f9be617f208e3930bcb82a101dc4587f69db197b2527b7929df070a1",
       "bytes": 20503
     }
   },
