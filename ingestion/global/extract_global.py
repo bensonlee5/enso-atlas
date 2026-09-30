@@ -34,7 +34,7 @@ def read(paths,run,var,stride=4):
  return coords,sorted(frames,key=lambda x:x['metadata']['endStep'])
 
 def main():
- p=argparse.ArgumentParser();p.add_argument('--model',choices=['cfs','aifs'],required=True);p.add_argument('--run',required=True);p.add_argument('--temperature',nargs='+',required=True);p.add_argument('--precipitation',nargs='+',required=True);p.add_argument('--output',required=True);p.add_argument('--days',type=int,default=60);a=p.parse_args()
+ p=argparse.ArgumentParser();p.add_argument('--model',choices=['cfs','aifs'],required=True);p.add_argument('--run',required=True);p.add_argument('--temperature',nargs='+',required=True);p.add_argument('--precipitation',nargs='+',required=True);p.add_argument('--output',required=True);p.add_argument('--days',type=int,default=60);p.add_argument('--compare-with',help='Validated AIFS JSON whose valid instants should be matched by real CFS temperature samples');a=p.parse_args()
  init=datetime.datetime.strptime(a.run,'%Y%m%d%H').replace(tzinfo=datetime.timezone.utc)
  c,t=read(a.temperature,a.run,'temperature');cp,r=read(a.precipitation,a.run,'precipitation');assert c==cp
  out={'model':'NOAA CFSv2' if a.model=='cfs' else 'ECMWF AIFS single','run':init.isoformat(),'gridCoordinates':c,'retrievedAt':datetime.datetime.now(datetime.timezone.utc).isoformat(),'method':'Global native grid sampled every 4 degrees; no city interpolation'}
@@ -47,6 +47,19 @@ def main():
    out['days'].append({'date':(init+datetime.timedelta(days=i)).date().isoformat(),'firstSampleHour':i*24+6,'lastSampleHour':(i+1)*24,'temperatureC':np.mean([f['values'] for f in t[i*4:i*4+4]],axis=0).round(2).tolist(),'precipitationMmDay':np.mean([f['values'] for f in r[i*4:i*4+4]],axis=0).round(2).tolist()})
   out['method']+='; 4 instantaneous 6-hour samples averaged per day; precipitation average rate is not exact accumulated rainfall'
   out['sources']=[f'https://nomads.ncep.noaa.gov/pub/data/nccf/com/cfs/prod/cfs.{a.run[:8]}/{a.run[8:]}/time_grib_01/{v}.01.{a.run}.daily.grb2' for v in ['tmp2m','prate']]
+  if a.compare_with:
+   other=json.loads(pathlib.Path(a.compare_with).read_text());other_init=datetime.datetime.fromisoformat(other['run'].replace('Z','+00:00'))
+   requested=sorted({other_init+datetime.timedelta(hours=int(f['metadata']['endStep'])) for f in other['frames'] if f['metadata']['shortName']=='2t'})
+   out['comparisonSnapshots']=[]
+   for valid in requested:
+    hours=(valid-init).total_seconds()/3600
+    matched=[f for f in t if f['metadata']['endStep']==hours]
+    if len(matched)==1:
+     f=matched[0];m=f['metadata'];assert m['stepType']=='instant'
+     assert m['validityDate']==int(valid.strftime('%Y%m%d')) and m['validityTime']==int(valid.strftime('%H%M'))
+     out['comparisonSnapshots'].append({'validTime':valid.isoformat(),'leadHours':int(hours),'temperatureC':f['values'].round(2).tolist(),'statistic':'instantaneous 2m air temperature'})
+   out['comparisonMethod']='Actual CFS six-hourly temperature snapshots selected at AIFS valid instants; no temporal interpolation. Different grids and initialization times remain explicit.'
+
  else:
   assert [x['metadata']['endStep'] for x in t]==[x['metadata']['endStep'] for x in r]
   out.update(kind='deterministic instantaneous temperature and cumulative precipitation snapshots',attribution='ECMWF open data, CC BY 4.0',source=f'https://data.ecmwf.int/forecasts/{a.run[:8]}/{a.run[8:]}z/aifs-single/0p25/oper/',frames=[{'metadata':f['metadata'],'values':f['values'].round(2).tolist()} for f in sorted(t+r,key=lambda f:f['metadata']['endStep'])])

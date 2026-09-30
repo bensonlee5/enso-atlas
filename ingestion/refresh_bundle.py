@@ -25,8 +25,8 @@ def main():
   subprocess.run([sys.executable,str(ROOT/'ingestion/ensemble/retrieve_ensemble.py'),'--run','latest','--days','60','--cache-dir',str(pathlib.Path(tmp)/'cache'),'--output',str(stage/'ensemble-percentiles.json')],check=True,timeout=900)
   ensemble=json.loads((stage/'ensemble-percentiles.json').read_text());run=dt.datetime.fromisoformat(ensemble['run']).strftime('%Y%m%d%H')
   cache=pathlib.Path(tmp)/'cache'
-  subprocess.run([sys.executable,str(ROOT/'ingestion/global/extract_global.py'),'--model','cfs','--run',run,'--temperature',str(cache/f'tmp2m.01.{run}.60days.grib2'),'--precipitation',str(cache/f'prate.01.{run}.60days.grib2'),'--output',str(stage/'cfs-global-60days.json')],check=True,timeout=240)
   subprocess.run([sys.executable,str(ROOT/'ingestion/global/refresh_global.py'),'--cache-dir',str(pathlib.Path(tmp)/'aifs-cache'),'--output',str(stage/'aifs-global-snapshots.json')],check=True,timeout=300)
+  subprocess.run([sys.executable,str(ROOT/'ingestion/global/extract_global.py'),'--model','cfs','--run',run,'--temperature',str(cache/f'tmp2m.01.{run}.60days.grib2'),'--precipitation',str(cache/f'prate.01.{run}.60days.grib2'),'--compare-with',str(stage/'aifs-global-snapshots.json'),'--output',str(stage/'cfs-global-60days.json')],check=True,timeout=240)
   # Archive both previously displayed and newly retrieved issuance before replacement.
   previous=a.output/'ensemble-percentiles.json'
   if previous.exists(): archive_product(previous,a.output/'archive')

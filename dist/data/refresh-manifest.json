@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-09-30T05:22:01.170027+00:00",
+  "generatedAt": "2026-09-30T06:07:20.869566+00:00",
   "files": {
     "cfs-weekly-raw-60days.json": {
       "sha256": "21d163fba92837fb982b167e1c979ab74b9c9b82b80d98f7dce0853f6f39d8dc",
@@ -19,8 +19,8 @@
       "bytes": 167889
     },
     "cfs-global-60days.json": {
-      "sha256": "2a9ee6829569eae16b8765dcfe54f0ef025800f6e6c50c428c329042ffc5e98d",
-      "bytes": 2666824
+      "sha256": "b52b282fd87e8ad5d16322ee060efb4fb0f5131935b04843516020a62cbf1b0d",
+      "bytes": 2763069
     },
     "aifs-global-snapshots.json": {
       "sha256": "aab0e23a70f5d6c64195676b077613087eddd845d47b7a31a6e02cb9982cee5a",
