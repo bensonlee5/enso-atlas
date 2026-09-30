@@ -1,0 +1,11 @@
+const assert=require('node:assert/strict'),Solar=require('../dist/solar.js');
+assert.equal(new Date(Solar.fromWall('2026-01-15','12:00','America/Los_Angeles')[0]).toISOString(),'2026-01-15T20:00:00.000Z');
+assert.equal(new Date(Solar.fromWall('2026-07-01','12:00','America/Los_Angeles')[0]).toISOString(),'2026-07-01T19:00:00.000Z');
+assert.equal(Solar.fromWall('2026-03-08','02:30','America/Los_Angeles').length,0);
+assert.deepEqual(Solar.fromWall('2026-11-01','01:30','America/Los_Angeles').map(t=>new Date(t).toISOString()),['2026-11-01T08:30:00.000Z','2026-11-01T09:30:00.000Z']);
+assert.equal(Solar.fromWall('2026-02-30','12:00','UTC').length,0);
+assert.equal(Solar.parts(Date.parse('2026-01-01T00:00Z'),'UTC').time,'00:00');
+const summer=Solar.position(new Date('2026-06-21T12:00Z')),winter=Solar.position(new Date('2026-12-21T12:00Z'));
+assert(Math.abs(summer.declination-23.452)<.01);assert(Math.abs(summer.longitude-.332)<.01);assert(Math.abs(winter.declination+23.420)<.01);
+assert(Number.isFinite(Solar.position(new Date('2024-02-29T12:00Z')).longitude));
+console.log('PASS solar: Pacific winter/summer offsets, DST gap/overlap, invalid dates, UTC midnight, solstices, leap day');

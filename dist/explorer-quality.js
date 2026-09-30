@@ -1,6 +1,7 @@
 'use strict';
 // One presentation layer, shared by direct controls, asynchronous data and WebMCP.
 function syncExplorerState(){
+ $('cityBar').hidden=globalMode||longMode;$('cityHeading').textContent=cities[city][0];
  document.querySelector('.colorbar').style.visibility=globalMode&&!globalField?'hidden':'visible';
  const banner=$('modeBanner');let label,detail,kind='forecast';
  if(globalMode){const d=globalField;kind=d?.kind==='CLIMATE AVERAGE'?'climate':d?.kind==='HISTORICAL REANALYSIS'?'history':d?'forecast':'unavailable';label=d?.heading||'No weather field';detail=d?d.valid:$('globalStatus').textContent;$('mapReading').textContent=d?$('globalPrimary').textContent+' '+d.unit+' · selected grid point':'No values substituted';}
