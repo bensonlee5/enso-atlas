@@ -1,0 +1,931 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-09-30T04:55:01.825827Z",
+  "asOf": "2026-09-30T04:55:01.823524Z",
+  "status": "awaiting_mature_periods",
+  "counts": {
+    "issuances": 1,
+    "temperatureForecasts": 90,
+    "verified": 0,
+    "pending": 90,
+    "missingObservations": 0,
+    "archivedLate": 10,
+    "invalidAsOf": 0
+  },
+  "minimumLatencyDays": 3,
+  "temperature": {
+    "units": "°C",
+    "label": "Temperature deviations against a CPC daily-extrema midpoint proxy",
+    "truth": "CPC (Tmax+Tmin)/2 weekly-mean proxy",
+    "truthKind": "real_noaa_cpc_analysis",
+    "forecastStatistic": "Four-member p50 of 28 six-hourly samples per member per week",
+    "observationStatistic": "Seven-day arithmetic average of paired daily (Tmax+Tmin)/2; separate four-day final-period diagnostic",
+    "metricDefinition": "error = forecastP50 − observedProxy; bias = mean(error); MAE = mean(abs(error)); RMSE = sqrt(mean(error²))",
+    "overall": {
+      "n": 0,
+      "bias": null,
+      "mae": null,
+      "rmse": null
+    },
+    "byLead": [
+      {
+        "leadWeek": 1,
+        "n": 0,
+        "bias": null,
+        "mae": null,
+        "rmse": null
+      },
+      {
+        "leadWeek": 2,
+        "n": 0,
+        "bias": null,
+        "mae": null,
+        "rmse": null
+      },
+      {
+        "leadWeek": 3,
+        "n": 0,
+        "bias": null,
+        "mae": null,
+        "rmse": null
+      },
+      {
+        "leadWeek": 4,
+        "n": 0,
+        "bias": null,
+        "mae": null,
+        "rmse": null
+      },
+      {
+        "leadWeek": 5,
+        "n": 0,
+        "bias": null,
+        "mae": null,
+        "rmse": null
+      },
+      {
+        "leadWeek": 6,
+        "n": 0,
+        "bias": null,
+        "mae": null,
+        "rmse": null
+      },
+      {
+        "leadWeek": 7,
+        "n": 0,
+        "bias": null,
+        "mae": null,
+        "rmse": null
+      },
+      {
+        "leadWeek": 8,
+        "n": 0,
+        "bias": null,
+        "mae": null,
+        "rmse": null
+      }
+    ],
+    "byLocation": [
+      {
+        "name": "Chicago",
+        "n": 0,
+        "bias": null,
+        "mae": null,
+        "rmse": null
+      },
+      {
+        "name": "Dallas",
+        "n": 0,
+        "bias": null,
+        "mae": null,
+        "rmse": null
+      },
+      {
+        "name": "Fresno",
+        "n": 0,
+        "bias": null,
+        "mae": null,
+        "rmse": null
+      },
+      {
+        "name": "Los Angeles",
+        "n": 0,
+        "bias": null,
+        "mae": null,
+        "rmse": null
+      },
+      {
+        "name": "Miami",
+        "n": 0,
+        "bias": null,
+        "mae": null,
+        "rmse": null
+      },
+      {
+        "name": "New York",
+        "n": 0,
+        "bias": null,
+        "mae": null,
+        "rmse": null
+      },
+      {
+        "name": "Sacramento",
+        "n": 0,
+        "bias": null,
+        "mae": null,
+        "rmse": null
+      },
+      {
+        "name": "San Diego",
+        "n": 0,
+        "bias": null,
+        "mae": null,
+        "rmse": null
+      },
+      {
+        "name": "San Francisco",
+        "n": 0,
+        "bias": null,
+        "mae": null,
+        "rmse": null
+      },
+      {
+        "name": "Seattle",
+        "n": 0,
+        "bias": null,
+        "mae": null,
+        "rmse": null
+      }
+    ],
+    "byLeadLocation": [
+      {
+        "name": "Chicago",
+        "leadWeek": 1,
+        "n": 0,
+        "bias": null,
+        "mae": null,
+        "rmse": null
+      },
+      {
+        "name": "Chicago",
+        "leadWeek": 2,
+        "n": 0,
+        "bias": null,
+        "mae": null,
+        "rmse": null
+      },
+      {
+        "name": "Chicago",
+        "leadWeek": 3,
+        "n": 0,
+        "bias": null,
+        "mae": null,
+        "rmse": null
+      },
+      {
+        "name": "Chicago",
+        "leadWeek": 4,
+        "n": 0,
+        "bias": null,
+        "mae": null,
+        "rmse": null
+      },
+      {
+        "name": "Chicago",
+        "leadWeek": 5,
+        "n": 0,
+        "bias": null,
+        "mae": null,
+        "rmse": null
+      },
+      {
+        "name": "Chicago",
+        "leadWeek": 6,
+        "n": 0,
+        "bias": null,
+        "mae": null,
+        "rmse": null
+      },
+      {
+        "name": "Chicago",
+        "leadWeek": 7,
+        "n": 0,
+        "bias": null,
+        "mae": null,
+        "rmse": null
+      },
+      {
+        "name": "Chicago",
+        "leadWeek": 8,
+        "n": 0,
+        "bias": null,
+        "mae": null,
+        "rmse": null
+      },
+      {
+        "name": "Dallas",
+        "leadWeek": 1,
+        "n": 0,
+        "bias": null,
+        "mae": null,
+        "rmse": null
+      },
+      {
+        "name": "Dallas",
+        "leadWeek": 2,
+        "n": 0,
+        "bias": null,
+        "mae": null,
+        "rmse": null
+      },
+      {
+        "name": "Dallas",
+        "leadWeek": 3,
+        "n": 0,
+        "bias": null,
+        "mae": null,
+        "rmse": null
+      },
+      {
+        "name": "Dallas",
+        "leadWeek": 4,
+        "n": 0,
+        "bias": null,
+        "mae": null,
+        "rmse": null
+      },
+      {
+        "name": "Dallas",
+        "leadWeek": 5,
+        "n": 0,
+        "bias": null,
+        "mae": null,
+        "rmse": null
+      },
+      {
+        "name": "Dallas",
+        "leadWeek": 6,
+        "n": 0,
+        "bias": null,
+        "mae": null,
+        "rmse": null
+      },
+      {
+        "name": "Dallas",
+        "leadWeek": 7,
+        "n": 0,
+        "bias": null,
+        "mae": null,
+        "rmse": null
+      },
+      {
+        "name": "Dallas",
+        "leadWeek": 8,
+        "n": 0,
+        "bias": null,
+        "mae": null,
+        "rmse": null
+      },
+      {
+        "name": "Fresno",
+        "leadWeek": 1,
+        "n": 0,
+        "bias": null,
+        "mae": null,
+        "rmse": null
+      },
+      {
+        "name": "Fresno",
+        "leadWeek": 2,
+        "n": 0,
+        "bias": null,
+        "mae": null,
+        "rmse": null
+      },
+      {
+        "name": "Fresno",
+        "leadWeek": 3,
+        "n": 0,
+        "bias": null,
+        "mae": null,
+        "rmse": null
+      },
+      {
+        "name": "Fresno",
+        "leadWeek": 4,
+        "n": 0,
+        "bias": null,
+        "mae": null,
+        "rmse": null
+      },
+      {
+        "name": "Fresno",
+        "leadWeek": 5,
+        "n": 0,
+        "bias": null,
+        "mae": null,
+        "rmse": null
+      },
+      {
+        "name": "Fresno",
+        "leadWeek": 6,
+        "n": 0,
+        "bias": null,
+        "mae": null,
+        "rmse": null
+      },
+      {
+        "name": "Fresno",
+        "leadWeek": 7,
+        "n": 0,
+        "bias": null,
+        "mae": null,
+        "rmse": null
+      },
+      {
+        "name": "Fresno",
+        "leadWeek": 8,
+        "n": 0,
+        "bias": null,
+        "mae": null,
+        "rmse": null
+      },
+      {
+        "name": "Los Angeles",
+        "leadWeek": 1,
+        "n": 0,
+        "bias": null,
+        "mae": null,
+        "rmse": null
+      },
+      {
+        "name": "Los Angeles",
+        "leadWeek": 2,
+        "n": 0,
+        "bias": null,
+        "mae": null,
+        "rmse": null
+      },
+      {
+        "name": "Los Angeles",
+        "leadWeek": 3,
+        "n": 0,
+        "bias": null,
+        "mae": null,
+        "rmse": null
+      },
+      {
+        "name": "Los Angeles",
+        "leadWeek": 4,
+        "n": 0,
+        "bias": null,
+        "mae": null,
+        "rmse": null
+      },
+      {
+        "name": "Los Angeles",
+        "leadWeek": 5,
+        "n": 0,
+        "bias": null,
+        "mae": null,
+        "rmse": null
+      },
+      {
+        "name": "Los Angeles",
+        "leadWeek": 6,
+        "n": 0,
+        "bias": null,
+        "mae": null,
+        "rmse": null
+      },
+      {
+        "name": "Los Angeles",
+        "leadWeek": 7,
+        "n": 0,
+        "bias": null,
+        "mae": null,
+        "rmse": null
+      },
+      {
+        "name": "Los Angeles",
+        "leadWeek": 8,
+        "n": 0,
+        "bias": null,
+        "mae": null,
+        "rmse": null
+      },
+      {
+        "name": "Miami",
+        "leadWeek": 1,
+        "n": 0,
+        "bias": null,
+        "mae": null,
+        "rmse": null
+      },
+      {
+        "name": "Miami",
+        "leadWeek": 2,
+        "n": 0,
+        "bias": null,
+        "mae": null,
+        "rmse": null
+      },
+      {
+        "name": "Miami",
+        "leadWeek": 3,
+        "n": 0,
+        "bias": null,
+        "mae": null,
+        "rmse": null
+      },
+      {
+        "name": "Miami",
+        "leadWeek": 4,
+        "n": 0,
+        "bias": null,
+        "mae": null,
+        "rmse": null
+      },
+      {
+        "name": "Miami",
+        "leadWeek": 5,
+        "n": 0,
+        "bias": null,
+        "mae": null,
+        "rmse": null
+      },
+      {
+        "name": "Miami",
+        "leadWeek": 6,
+        "n": 0,
+        "bias": null,
+        "mae": null,
+        "rmse": null
+      },
+      {
+        "name": "Miami",
+        "leadWeek": 7,
+        "n": 0,
+        "bias": null,
+        "mae": null,
+        "rmse": null
+      },
+      {
+        "name": "Miami",
+        "leadWeek": 8,
+        "n": 0,
+        "bias": null,
+        "mae": null,
+        "rmse": null
+      },
+      {
+        "name": "New York",
+        "leadWeek": 1,
+        "n": 0,
+        "bias": null,
+        "mae": null,
+        "rmse": null
+      },
+      {
+        "name": "New York",
+        "leadWeek": 2,
+        "n": 0,
+        "bias": null,
+        "mae": null,
+        "rmse": null
+      },
+      {
+        "name": "New York",
+        "leadWeek": 3,
+        "n": 0,
+        "bias": null,
+        "mae": null,
+        "rmse": null
+      },
+      {
+        "name": "New York",
+        "leadWeek": 4,
+        "n": 0,
+        "bias": null,
+        "mae": null,
+        "rmse": null
+      },
+      {
+        "name": "New York",
+        "leadWeek": 5,
+        "n": 0,
+        "bias": null,
+        "mae": null,
+        "rmse": null
+      },
+      {
+        "name": "New York",
+        "leadWeek": 6,
+        "n": 0,
+        "bias": null,
+        "mae": null,
+        "rmse": null
+      },
+      {
+        "name": "New York",
+        "leadWeek": 7,
+        "n": 0,
+        "bias": null,
+        "mae": null,
+        "rmse": null
+      },
+      {
+        "name": "New York",
+        "leadWeek": 8,
+        "n": 0,
+        "bias": null,
+        "mae": null,
+        "rmse": null
+      },
+      {
+        "name": "Sacramento",
+        "leadWeek": 1,
+        "n": 0,
+        "bias": null,
+        "mae": null,
+        "rmse": null
+      },
+      {
+        "name": "Sacramento",
+        "leadWeek": 2,
+        "n": 0,
+        "bias": null,
+        "mae": null,
+        "rmse": null
+      },
+      {
+        "name": "Sacramento",
+        "leadWeek": 3,
+        "n": 0,
+        "bias": null,
+        "mae": null,
+        "rmse": null
+      },
+      {
+        "name": "Sacramento",
+        "leadWeek": 4,
+        "n": 0,
+        "bias": null,
+        "mae": null,
+        "rmse": null
+      },
+      {
+        "name": "Sacramento",
+        "leadWeek": 5,
+        "n": 0,
+        "bias": null,
+        "mae": null,
+        "rmse": null
+      },
+      {
+        "name": "Sacramento",
+        "leadWeek": 6,
+        "n": 0,
+        "bias": null,
+        "mae": null,
+        "rmse": null
+      },
+      {
+        "name": "Sacramento",
+        "leadWeek": 7,
+        "n": 0,
+        "bias": null,
+        "mae": null,
+        "rmse": null
+      },
+      {
+        "name": "Sacramento",
+        "leadWeek": 8,
+        "n": 0,
+        "bias": null,
+        "mae": null,
+        "rmse": null
+      },
+      {
+        "name": "San Diego",
+        "leadWeek": 1,
+        "n": 0,
+        "bias": null,
+        "mae": null,
+        "rmse": null
+      },
+      {
+        "name": "San Diego",
+        "leadWeek": 2,
+        "n": 0,
+        "bias": null,
+        "mae": null,
+        "rmse": null
+      },
+      {
+        "name": "San Diego",
+        "leadWeek": 3,
+        "n": 0,
+        "bias": null,
+        "mae": null,
+        "rmse": null
+      },
+      {
+        "name": "San Diego",
+        "leadWeek": 4,
+        "n": 0,
+        "bias": null,
+        "mae": null,
+        "rmse": null
+      },
+      {
+        "name": "San Diego",
+        "leadWeek": 5,
+        "n": 0,
+        "bias": null,
+        "mae": null,
+        "rmse": null
+      },
+      {
+        "name": "San Diego",
+        "leadWeek": 6,
+        "n": 0,
+        "bias": null,
+        "mae": null,
+        "rmse": null
+      },
+      {
+        "name": "San Diego",
+        "leadWeek": 7,
+        "n": 0,
+        "bias": null,
+        "mae": null,
+        "rmse": null
+      },
+      {
+        "name": "San Diego",
+        "leadWeek": 8,
+        "n": 0,
+        "bias": null,
+        "mae": null,
+        "rmse": null
+      },
+      {
+        "name": "San Francisco",
+        "leadWeek": 1,
+        "n": 0,
+        "bias": null,
+        "mae": null,
+        "rmse": null
+      },
+      {
+        "name": "San Francisco",
+        "leadWeek": 2,
+        "n": 0,
+        "bias": null,
+        "mae": null,
+        "rmse": null
+      },
+      {
+        "name": "San Francisco",
+        "leadWeek": 3,
+        "n": 0,
+        "bias": null,
+        "mae": null,
+        "rmse": null
+      },
+      {
+        "name": "San Francisco",
+        "leadWeek": 4,
+        "n": 0,
+        "bias": null,
+        "mae": null,
+        "rmse": null
+      },
+      {
+        "name": "San Francisco",
+        "leadWeek": 5,
+        "n": 0,
+        "bias": null,
+        "mae": null,
+        "rmse": null
+      },
+      {
+        "name": "San Francisco",
+        "leadWeek": 6,
+        "n": 0,
+        "bias": null,
+        "mae": null,
+        "rmse": null
+      },
+      {
+        "name": "San Francisco",
+        "leadWeek": 7,
+        "n": 0,
+        "bias": null,
+        "mae": null,
+        "rmse": null
+      },
+      {
+        "name": "San Francisco",
+        "leadWeek": 8,
+        "n": 0,
+        "bias": null,
+        "mae": null,
+        "rmse": null
+      },
+      {
+        "name": "Seattle",
+        "leadWeek": 1,
+        "n": 0,
+        "bias": null,
+        "mae": null,
+        "rmse": null
+      },
+      {
+        "name": "Seattle",
+        "leadWeek": 2,
+        "n": 0,
+        "bias": null,
+        "mae": null,
+        "rmse": null
+      },
+      {
+        "name": "Seattle",
+        "leadWeek": 3,
+        "n": 0,
+        "bias": null,
+        "mae": null,
+        "rmse": null
+      },
+      {
+        "name": "Seattle",
+        "leadWeek": 4,
+        "n": 0,
+        "bias": null,
+        "mae": null,
+        "rmse": null
+      },
+      {
+        "name": "Seattle",
+        "leadWeek": 5,
+        "n": 0,
+        "bias": null,
+        "mae": null,
+        "rmse": null
+      },
+      {
+        "name": "Seattle",
+        "leadWeek": 6,
+        "n": 0,
+        "bias": null,
+        "mae": null,
+        "rmse": null
+      },
+      {
+        "name": "Seattle",
+        "leadWeek": 7,
+        "n": 0,
+        "bias": null,
+        "mae": null,
+        "rmse": null
+      },
+      {
+        "name": "Seattle",
+        "leadWeek": 8,
+        "n": 0,
+        "bias": null,
+        "mae": null,
+        "rmse": null
+      }
+    ],
+    "partialDays57to60": {
+      "label": "Days 57–60 (4 days), excluded from full-week aggregates",
+      "n": 0,
+      "bias": null,
+      "mae": null,
+      "rmse": null,
+      "byLocation": [
+        {
+          "name": "Chicago",
+          "n": 0,
+          "bias": null,
+          "mae": null,
+          "rmse": null
+        },
+        {
+          "name": "Dallas",
+          "n": 0,
+          "bias": null,
+          "mae": null,
+          "rmse": null
+        },
+        {
+          "name": "Fresno",
+          "n": 0,
+          "bias": null,
+          "mae": null,
+          "rmse": null
+        },
+        {
+          "name": "Los Angeles",
+          "n": 0,
+          "bias": null,
+          "mae": null,
+          "rmse": null
+        },
+        {
+          "name": "Miami",
+          "n": 0,
+          "bias": null,
+          "mae": null,
+          "rmse": null
+        },
+        {
+          "name": "New York",
+          "n": 0,
+          "bias": null,
+          "mae": null,
+          "rmse": null
+        },
+        {
+          "name": "Sacramento",
+          "n": 0,
+          "bias": null,
+          "mae": null,
+          "rmse": null
+        },
+        {
+          "name": "San Diego",
+          "n": 0,
+          "bias": null,
+          "mae": null,
+          "rmse": null
+        },
+        {
+          "name": "San Francisco",
+          "n": 0,
+          "bias": null,
+          "mae": null,
+          "rmse": null
+        },
+        {
+          "name": "Seattle",
+          "n": 0,
+          "bias": null,
+          "mae": null,
+          "rmse": null
+        }
+      ]
+    },
+    "auditPairCount": 90,
+    "auditNote": "Per-forecast rows omitted from public summary. Re-run identical immutable archive with --include-pairs for full native-grid coordinates, actual daily source dates, missing dates, archive timing and errors. Source revisions are identified by changed response SHA256."
+  },
+  "precipitation": {
+    "status": "incompatible_statistic",
+    "n": 0,
+    "bias": null,
+    "mae": null,
+    "rmse": null,
+    "reason": "Archived CFS precipitation is a mean sampled instantaneous rate in mm/day-equivalent. It is not a validated accumulated amount or time-integrated mean rate; direct scoring against daily accumulated rainfall would compare incompatible temporal statistics."
+  },
+  "source": {
+    "name": "NOAA CPC Global Daily Temperature V1.0, served by NOAA PSL",
+    "documentation": "https://psl.noaa.gov/data/gridded/data.cpc.globaltemp.html",
+    "endpointTemplate": "https://psl.noaa.gov/thredds/dodsC/Datasets/cpc_global_temp/{tmax|tmin}.{year}.nc",
+    "latestAvailableDates": {},
+    "actualAvailabilityCheck": "NOAA annual time dimension plus exact per-row daily timestamps and complete finite Tmax/Tmin coverage",
+    "observationRevisionPolicy": "Re-fetch needed source subsets on each run; immutable response hashes and optional evidence files preserve each evaluated source version."
+  },
+  "sourceProvenance": [],
+  "sourceErrors": [],
+  "warnings": [
+    "Proxy diagnostic, not exact forecast skill or evidence for model ranking: CFS uses 28 instantaneous six-hourly samples; CPC uses weekly averages of daily (Tmax+Tmin)/2.",
+    "CPC metadata specifies nominal 06Z-to-06Z extrema windows. These do not exactly match the CFS nominal midnight-to-midnight interval or its sample timestamps.",
+    "Observations are the nearest 0.5-degree CPC analysis grid cell to the native CFS model point, not a city station, city-center observation or downscaled truth. Missing land/ocean cells are withheld.",
+    "The three-day minimum latency is an application safety buffer, not a guarantee of NOAA availability or final quality control. All seven paired finite daily observations are required; observations may later be revised.",
+    "Bias is forecast minus observed proxy, so positive bias means warmer forecasts. Each verified forecast-location-week receives equal weight; overlapping runs and shared grid points are not independent.",
+    "Only raw temperature p50 is evaluated. Anomalies, tail probabilities and ENSO contribution are not evaluated. Days 57–60 are a partial four-day period and are excluded from week1–8 diagnostics.",
+    "Metrics describe deviations in the archived forecasts, not calibrated predictive uncertainty or a comparison against competing models.",
+    "10 forecast-location periods were first archived after their valid window began; they are flagged and cannot be claimed as strictly prospective issue-time captures.",
+    "Some locations use the same native forecast grid point; their errors are duplicates, not independent evidence: Sacramento, San Francisco"
+  ],
+  "archiveProvenance": [
+    {
+      "run": "2026-09-29T00:00:00+00:00",
+      "archivedAt": "2026-09-30T04:47:22.020333+00:00",
+      "path": "2026092900.json",
+      "sha256": "71e41a9e90167ff598b1e5f919e7e2c61f58c228e3bd2de17b5981376d45dea9",
+      "sourceProductSha256": "34e1a766114ec29298917defd26110f0d16921e7938baddf2f2291b7e60ed9f2"
+    }
+  ],
+  "verificationRecipe": {
+    "scriptSha256": "50c325b23bac53e1aca6ba7e75320079ad865ad18bcea0da91ba4d1a8f1a3d9e",
+    "minimumLatencyDays": 3,
+    "asOf": "2026-09-30T04:55:01.823524Z",
+    "fullPairsIncluded": false,
+    "maxActiveIssuances": 400,
+    "networkBudgetSeconds": 240,
+    "requestBudget": 80
+  }
+}

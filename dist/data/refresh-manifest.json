@@ -1,0 +1,33 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-09-30T04:55:01.887110+00:00",
+  "files": {
+    "cfs-weekly-raw-60days.json": {
+      "sha256": "5d2b67550727fde089918cca216c10b143ca640cd000090599e8329d93afda37",
+      "bytes": 53169
+    },
+    "cfs-weekly-anomalies.json": {
+      "sha256": "b621ee67be2f6d29ed4f01fd96aa85b9f467a7f292408bc11a1952fa93a7ac90",
+      "bytes": 17973
+    },
+    "enso-observations.json": {
+      "sha256": "f9b16b89bb92bc57aa331a7195970eeb8b170a57efc5a1ac377bbf993b9717cf",
+      "bytes": 17462
+    },
+    "ensemble-percentiles.json": {
+      "sha256": "fee92a4aaa0d72c14c9b16380f09a3af1b7eab2a974f4dadfa7c54fbdf5380be",
+      "bytes": 167889
+    },
+    "verification.json": {
+      "sha256": "5bf138c779319bbc7f6aa79507e4fd7b7492d07a0b8112e86d43b56f2f4cca50",
+      "bytes": 20503
+    }
+  },
+  "initializations": {
+    "raw": "2026-09-29T12:00:00Z",
+    "anomaly": "2026-09-28",
+    "ensemble": "2026-09-29T00:00:00+00:00",
+    "ensoObservation": "2026-09-23"
+  },
+  "source": "Public NOAA products; see each product for exact sources and statistical meaning"
+}

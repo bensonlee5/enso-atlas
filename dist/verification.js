@@ -1,0 +1,9 @@
+'use strict';
+let verificationReport=null;
+function renderVerification(){if(!verificationReport)return;const r=verificationReport,n=r.counts,group=$('verificationGrouping').value;const unit=fahrenheit?'°F':'°C',scale=fahrenheit?1.8:1;
+ $('verificationStatus').textContent=n.verified?`${n.verified} observed temperature comparisons · ${n.pending} pending · checked ${r.generatedAt.slice(0,16).replace('T',' ')} UTC`:`${n.missingObservations?'Observed data unavailable for '+n.missingObservations+' mature periods':'No mature, verified forecasts yet'} · ${n.pending} periods pending · checked ${r.generatedAt.slice(0,16).replace('T',' ')} UTC`;
+ const tbody=$('verificationRows');tbody.replaceChildren();const rows=r.temperature[group]||[];for(const row of rows){const tr=document.createElement('tr');for(const v of [group==='byLead'?(row.leadWeek===9?'Days 57–60':`Week ${row.leadWeek}`):row.name,row.n,...['bias','mae','rmse'].map(k=>Number.isFinite(row[k])?(row[k]*scale).toFixed(2)+' '+unit:'—')]){const td=document.createElement('td');td.textContent=v;tr.appendChild(td)}tbody.appendChild(tr)}if(!rows.length){const tr=document.createElement('tr'),td=document.createElement('td');td.colSpan=5;td.textContent='Waiting for complete observed target periods. No accuracy score is available yet.';tr.appendChild(td);tbody.appendChild(tr)}
+ $('verificationNotes').textContent=(r.warnings||[]).join(' ');document.querySelectorAll('#liveVerification th').forEach((el,i)=>{if(i>=2)el.textContent=['Bias','MAE','RMSE'][i-2]+' '+unit});
+}
+$('verificationGrouping').onchange=renderVerification;
+fetch('data/verification.json').then(r=>{if(!r.ok)throw Error('Unavailable');return r.json()}).then(r=>{verificationReport=r;renderVerification()}).catch(()=>{$('verificationStatus').textContent='Observation comparison unavailable. No accuracy score is shown.'});
