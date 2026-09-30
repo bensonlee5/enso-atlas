@@ -12,3 +12,5 @@ ingestion/cfs-*.json
 ingestion/aifs-*.json
 ingestion/wksst9120.for
 *.json.tmp
+
+dist/server/

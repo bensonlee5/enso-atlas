@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-09-30T04:58:52.266379+00:00",
+  "generatedAt": "2026-09-30T05:13:48.300906+00:00",
   "files": {
     "cfs-weekly-raw-60days.json": {
       "sha256": "2b9d2b77dfb033c3dfaa1c62ae99a2c5a9c48be42da6cd3e9541ca6a59ba52a3",
@@ -17,6 +17,14 @@
     "ensemble-percentiles.json": {
       "sha256": "94ad7465f3106e2e420ce3e4ad1b2ef1e4b4461fe5f0a4abbd02c0e152168cfd",
       "bytes": 167889
+    },
+    "cfs-global-60days.json": {
+      "sha256": "d27f75f723da7a730ad18b03bc96e968528b8b45de4c6395467001e914b032e5",
+      "bytes": 2666824
+    },
+    "aifs-global-snapshots.json": {
+      "sha256": "2da19a6b34ac7def34723b3a035fb58683b46b5c90a41e33c2e8a556917cc3c6",
+      "bytes": 242140
     },
     "verification.json": {
       "sha256": "89e0af62f9be617f208e3930bcb82a101dc4587f69db197b2527b7929df070a1",

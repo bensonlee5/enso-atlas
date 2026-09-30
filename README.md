@@ -4,7 +4,7 @@ A source-honest weather exploration dashboard. A canvas globe plots actual city 
 ## Run
 `python -m http.server 8080 --directory dist`
 
-No build dependencies, API keys, subscriptions or paid services are required. Open index through HTTP rather than a file URL. Forecasts refresh when opened and cache locally for one hour; the refresh button requests new data. A dated source snapshot remains available if the API fails. Retrieval time is not forecast initialization; the GFS API does not expose cycle time.
+Node.js 22+ and Python are sufficient; no npm dependencies, API keys, subscriptions or paid services are required. Open index through HTTP rather than a file URL. Forecasts refresh when opened and cache locally for one hour; the refresh button requests new data. A dated source snapshot remains available if the API fails. Retrieval time is not forecast initialization; the GFS API does not expose cycle time.
 
 ## Data and terms
 - Weather: NOAA GFS via https://open-meteo.com/en/docs/gfs-api ; attribution is shown in app. Open-Meteo free API is for non-commercial use and subject to their rate limits/terms. A monetized or high-traffic deployment requires reviewing https://open-meteo.com/en/terms and choosing an approved service. No purchase made.
@@ -63,3 +63,12 @@ The scheduled GitHub workflow runs at 09:17 UTC daily (GitHub scheduling is best
 Before replacement, both the previous and new CFS ensemble issuance are archived immutably for the ten displayed sampled locations, including quantiles and exact valid intervals. The active index keeps 400 issuances; older small files stay available. This archives the location outlooks, not every global-grid field. A rerun never rewrites an existing issuance. Collection began September 30, 2026; the initial September 29 forecast was captured after initialization, so this is not an operational issue-time archive from that earlier date.
 
 The observation check waits for completed target periods and a source-latency allowance. Temperature verification compares P50 with NOAA CPC's mean of daily Tmax/Tmin at the nearest observation land-grid point, explicitly a diagnostic proxy for the forecast's mean of six-hourly samples. Spatial and daily-window differences remain. Precipitation verification is withheld because the displayed sampled instantaneous rate is not an accumulated rainfall forecast. Pending cases have no invented error metrics. This live archive is separate from the historical training pilot.
+
+
+### Global models, climate averages and historical dates
+
+The Global models / history view switches between genuine sampled native global CFSv2 and ECMWF AIFS fields. CFS exposes daily averages of four six-hour instantaneous samples through60days. AIFS exposes actual24/168/336/360-hour snapshots; selecting another in-range date explicitly snaps to the nearest available snapshot. Their initialization times and temporal statistics remain visible. CFS precipitation is an instantaneous-rate sample mean; AIFS precipitation is accumulated since initialization. They must not be compared as equal rainfall statistics. These deterministic global fields do not provide ensemble percentiles; the existing CONUS ensemble remains separate.
+
+Automatic date selection uses a1991–2020 monthly NOAA NCEP/NCAR climatology beyond the selected model horizon. This is a historical monthly climate average, not weather for the chosen future day and not a projection of climate change. Historical dates use real NCEP/NCAR Reanalysis1 daily grids from1948-01-01 through2026-03-17. This product ended in March2026. Dates in the gap before current forecast initialization are explicitly unavailable. Reanalysis reconstructs conditions from observations and a model; it is distinct from a forecast issued at that time and from the immutable issued-forecast archive.
+
+The public `/api/history?date=YYYY-MM-DD` route fetches only the two fixed official NOAA temperature/precipitation datasets. Strict date bounds, response-size caps, timeouts, limited concurrency and bounded caching protect the upstream and runtime. No credentials or arbitrary URL proxy are provided. `node scripts/build-worker.mjs` creates a self-contained Cloudflare-compatible Worker while preserving the plain HTML/JS app. `node scripts/serve.mjs` runs the same handler locally, including historical retrieval.

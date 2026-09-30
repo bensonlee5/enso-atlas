@@ -1,0 +1,18 @@
+// Public, bounded weather-only API. No credentials or arbitrary upstream URLs.
+import {getHistory} from './history.mjs';
+async function boundedFetch(url,options){
+ if(!String(url).startsWith('https://psl.noaa.gov/thredds/dodsC/Datasets/ncep.reanalysis/Dailies/surface_gauss/'))throw Error('Unapproved source');
+ const r=await fetch(url,options);if(!r.ok)return r;const reader=r.body.getReader(),chunks=[];let size=0;try{while(true){const {value,done}=await reader.read();if(done)break;size+=value.length;if(size>512000)throw Error('NOAA response exceeds limit');chunks.push(value)}}catch(e){await reader.cancel();throw e}const bytes=new Uint8Array(size);let offset=0;for(const c of chunks){bytes.set(c,offset);offset+=c.length}return new Response(bytes,{status:r.status,headers:r.headers});
+}
+function validateHistory(data,date){const c=data.gridCoordinates;if(data.date!==date||!Array.isArray(c)||c.length>10000||!c.length||!c.every(p=>p.length===2&&p.every(Number.isFinite)&&Math.abs(p[0])<=90&&Math.abs(p[1])<=180))throw Error('Invalid historical grid');for(const field of ['temperatureC','precipitationMmDay'])if(data[field]?.length!==c.length||!data[field].every(v=>v===null||Number.isFinite(v)))throw Error('Invalid historical values');return data}
+const historicalCache=new Map(),inflight=new Map();
+export async function handleHistory(request){
+ const u=new URL(request.url);
+ if(request.method!=='GET')return Response.json({error:'GET only'},{status:405});
+ const date=u.searchParams.get('date');if([...u.searchParams.keys()].some(k=>k!=='date')||u.searchParams.getAll('date').length!==1||!/^\d{4}-\d{2}-\d{2}$/.test(date||'')||date<'1948-01-01'||date>'2026-03-17')return Response.json({error:'Choose a date from 1948-01-01 through 2026-03-17'},{status:400});
+ const parsedDate=new Date(date+'T00:00:00Z');if(!Number.isFinite(+parsedDate)||parsedDate.toISOString().slice(0,10)!==date)return Response.json({error:'Invalid calendar date'},{status:400});
+ const cached=historicalCache.get(date);if(cached)return new Response(cached,{headers:{'content-type':'application/json','cache-control':'public,max-age=86400'}});
+ try{let p=inflight.get(date);if(!p){if(inflight.size>=4)return Response.json({error:'Historical data service busy. Try again shortly.'},{status:429,headers:{'retry-after':'10'}});p=getHistory(date,boundedFetch).then(data=>JSON.stringify(validateHistory(data,date)));inflight.set(date,p)}const body=await p;if(body.length>1000000)throw Error('Response too large');historicalCache.set(date,body);while(historicalCache.size>12)historicalCache.delete(historicalCache.keys().next().value);return new Response(body,{headers:{'content-type':'application/json','cache-control':'public,max-age=86400'}})}catch{return Response.json({error:'NOAA historical data is temporarily unavailable. No reconstructed values are substituted.'},{status:502})}finally{inflight.delete(date)}
+}
+// The build supplies a checked allowlist of the existing public static assets.
+export function createWorker(assets){return {async fetch(request){const path=new URL(request.url).pathname;if(path==='/api/history')return handleHistory(request);if(!['GET','HEAD'].includes(request.method))return new Response('Method not allowed',{status:405});const asset=assets[path==='/'?'/index.html':path];if(!asset)return new Response('Not found',{status:404});const headers={'content-type':asset.type,'etag':asset.etag,'cache-control':path.endsWith('.json')?'public,max-age=300':'public,max-age=60','x-content-type-options':'nosniff'};if(request.headers.get('if-none-match')===asset.etag)return new Response(null,{status:304,headers});return new Response(request.method==='HEAD'?null:asset.body,{headers})}}}

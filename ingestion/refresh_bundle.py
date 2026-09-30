@@ -2,7 +2,7 @@
 import argparse, datetime as dt, hashlib, json, os, pathlib, subprocess, sys, tempfile
 from archive_forecasts import archive_product
 ROOT=pathlib.Path(__file__).resolve().parents[1]
-FILES=('cfs-weekly-raw-60days.json','cfs-weekly-anomalies.json','enso-observations.json','ensemble-percentiles.json')
+FILES=('cfs-weekly-raw-60days.json','cfs-weekly-anomalies.json','enso-observations.json','ensemble-percentiles.json','cfs-global-60days.json','aifs-global-snapshots.json')
 def manifest_for(folder):
  products={n:json.loads((folder/n).read_text()) for n in FILES}
  ens=products['ensemble-percentiles.json']
@@ -23,6 +23,10 @@ def main():
   stage=pathlib.Path(tmp)/'data';stage.mkdir()
   subprocess.run([sys.executable,str(ROOT/'ingestion/refresh.py'),'--output',str(stage)],check=True,timeout=900)
   subprocess.run([sys.executable,str(ROOT/'ingestion/ensemble/retrieve_ensemble.py'),'--run','latest','--days','60','--cache-dir',str(pathlib.Path(tmp)/'cache'),'--output',str(stage/'ensemble-percentiles.json')],check=True,timeout=900)
+  ensemble=json.loads((stage/'ensemble-percentiles.json').read_text());run=dt.datetime.fromisoformat(ensemble['run']).strftime('%Y%m%d%H')
+  cache=pathlib.Path(tmp)/'cache'
+  subprocess.run([sys.executable,str(ROOT/'ingestion/global/extract_global.py'),'--model','cfs','--run',run,'--temperature',str(cache/f'tmp2m.01.{run}.60days.grib2'),'--precipitation',str(cache/f'prate.01.{run}.60days.grib2'),'--output',str(stage/'cfs-global-60days.json')],check=True,timeout=240)
+  subprocess.run([sys.executable,str(ROOT/'ingestion/global/refresh_global.py'),'--cache-dir',str(pathlib.Path(tmp)/'aifs-cache'),'--output',str(stage/'aifs-global-snapshots.json')],check=True,timeout=300)
   # Archive both previously displayed and newly retrieved issuance before replacement.
   previous=a.output/'ensemble-percentiles.json'
   if previous.exists(): archive_product(previous,a.output/'archive')
