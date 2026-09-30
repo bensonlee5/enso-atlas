@@ -1,0 +1,59 @@
+{
+  "rows": 3588,
+  "unique_init_dates": 598,
+  "regions": {
+    "central_north": 110,
+    "central_south": 72,
+    "east_north": 45,
+    "east_south": 23,
+    "west_north": 95,
+    "west_south": 31
+  },
+  "first_init": "1999-01-01",
+  "last_init": "2021-12-31",
+  "last_target_end": "2022-01-28",
+  "target_days": 14,
+  "target_start_lead_days": 15,
+  "target_end_lead_days": 28,
+  "raw_candidate_rows": 3588,
+  "dropped_incomplete_regions": 0,
+  "per_year_rows": {
+    "1999": 162,
+    "2000": 156,
+    "2001": 156,
+    "2002": 156,
+    "2003": 156,
+    "2004": 156,
+    "2005": 156,
+    "2006": 156,
+    "2007": 156,
+    "2008": 156,
+    "2009": 156,
+    "2010": 162,
+    "2011": 156,
+    "2012": 156,
+    "2013": 156,
+    "2014": 156,
+    "2015": 156,
+    "2016": 156,
+    "2017": 138,
+    "2018": 156,
+    "2019": 156,
+    "2020": 156,
+    "2021": 162
+  },
+  "csv_sha256": "08e805b9c9d022e449def05d70b0e1a3b0f32bf849912c21bd4c00534634ea1b",
+  "expected_init_dates": 601,
+  "missing_initializations": [
+    "2017-08-04",
+    "2017-08-18",
+    "2017-10-13"
+  ],
+  "checks": [
+    "unique init/region",
+    "14-day target and 15-day start lead",
+    "30-day persistence lag",
+    "nonnegative precip",
+    "nonoverlapping target periods per region"
+  ]
+}

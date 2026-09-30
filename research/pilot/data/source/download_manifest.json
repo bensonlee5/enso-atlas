@@ -1,0 +1,32 @@
+[
+  {
+    "file": "iri-cfsv2-precip-all-us1_5-ensembled.h5",
+    "bytes": 477628552,
+    "sha256": "c7dd164165461ff570251e1032ad343295134d9c0f704fb1c194bcd3b5e53e25",
+    "url": "https://subseasonalusa.blob.core.windows.net/subseasonalusa/dataframes/iri-cfsv2-precip-all-us1_5-ensembled.h5"
+  },
+  {
+    "file": "iri-cfsv2-tmp2m-all-us1_5-ensembled.h5",
+    "bytes": 479343112,
+    "sha256": "df10ee21f30cc12096688603bba67fcd0fd485d9cdfc4b499ad6835381ef6852",
+    "url": "https://subseasonalusa.blob.core.windows.net/subseasonalusa/dataframes/iri-cfsv2-tmp2m-all-us1_5-ensembled.h5"
+  },
+  {
+    "file": "gt-us_precip_1.5x1.5-14d.h5",
+    "bytes": 84198696,
+    "sha256": "e2fbdc77c912b4c201851fa78a65d5c96f5f8ce2e59ab5c2503cdb880f61cfc4",
+    "url": "https://subseasonalusa.blob.core.windows.net/subseasonalusa/dataframes/gt-us_precip_1.5x1.5-14d.h5"
+  },
+  {
+    "file": "gt-us_tmp2m_1.5x1.5-14d.h5",
+    "bytes": 174812848,
+    "sha256": "fe876a92c6d4e362c008fef62108235a19e64dcd9fc3038c7515d8bbb4351424",
+    "url": "https://subseasonalusa.blob.core.windows.net/subseasonalusa/dataframes/gt-us_tmp2m_1.5x1.5-14d.h5"
+  },
+  {
+    "file": "gt-mei.h5",
+    "bytes": 669128,
+    "sha256": "90667ae43be0bfbca490de29acd7bd418544b369227baf743ca03425841bfb88",
+    "url": "https://subseasonalusa.blob.core.windows.net/subseasonalusa/dataframes/gt-mei.h5"
+  }
+]

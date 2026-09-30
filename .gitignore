@@ -4,3 +4,11 @@ __pycache__/
 .venv/
 .env
 .sites-runtime/
+ingestion/python-packages/
+ingestion/*.grib2
+ingestion/*.nc
+ingestion/*.idx
+ingestion/cfs-*.json
+ingestion/aifs-*.json
+ingestion/wksst9120.for
+*.json.tmp

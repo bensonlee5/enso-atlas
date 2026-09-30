@@ -1,0 +1,9 @@
+.venv/
+__pycache__/
+*.pyc
+runs/
+data/
+
+# Include the small, source-credited reproducibility dataset shipped with the pilot.
+!pilot/data/
+!pilot/data/**

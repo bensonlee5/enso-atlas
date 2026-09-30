@@ -1,0 +1,14 @@
+{
+  "forecast_source": "REPLACE with product, model/version, archive URL and access date",
+  "observation_source": "REPLACE with verified observations/reanalysis version and URL",
+  "temperature_units": "REPLACE with anomaly units, e.g. degrees C",
+  "precipitation_units": "REPLACE with anomaly units, e.g. mm/day",
+  "anomaly_reference": "REPLACE with training-only or fixed operational reference period, aggregation and method",
+  "aggregation_period": "REPLACE with daily/weekly averaging definition; valid_date means period END",
+  "enso_source": "REPLACE with index definition, archive URL, vintage/version",
+  "enso_availability_method": "REPLACE with proof the index vintage was published by init_date",
+  "region_definitions": "REPLACE with spatial masks, area weighting and version",
+  "enso_available_at_initialization": false,
+  "anomaly_reference_excludes_heldout_data": false,
+  "forecast_hindcasts_no_future_information": false
+}

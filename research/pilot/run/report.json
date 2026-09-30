@@ -1,0 +1,1725 @@
+{
+  "config": {
+    "seed": 42,
+    "hidden_layers": [
+      24,
+      12
+    ],
+    "max_epochs": 400,
+    "patience": 40,
+    "learning_rate": 0.001,
+    "alpha": 0.01,
+    "ridge_alpha": 10.0,
+    "validation_start": "2015-01-01",
+    "test_start": "2018-01-01",
+    "purge_days": 14,
+    "climatology_harmonics": 2,
+    "enso_features": false
+  },
+  "dataset_sha256": "08e805b9c9d022e449def05d70b0e1a3b0f32bf849912c21bd4c00534634ea1b",
+  "manifest_sha256": "94871f1252dcdc5c9de066cf7bdcc11ac1de5739f61b1322a507947914820397",
+  "scope": "Six-region CONUS retrospective weeks 3\u20134 deterministic calibration pilot; not backbone fine-tuning",
+  "probabilistic_validation": null,
+  "enso_input": false,
+  "purged_rows": 36,
+  "provenance": {
+    "dataset": "SubseasonalClimateUSA CFSv2 paired CPC regional pilot",
+    "source_url": "https://github.com/microsoft/subseasonal_data",
+    "documentation_url": "https://github.com/microsoft/subseasonal_data/blob/main/DATA.md",
+    "data_license": "CC BY 4.0",
+    "download_date_utc": "2026-09-30",
+    "forecast_source": "CFSv2 IRI/SubX 1.5degree ensemble archive, lead15.5d, 1999-2021",
+    "observation_source": "CPC temperature and precipitation 14-day SubseasonalClimateUSA archive",
+    "temperature_units": "degrees Celsius, 14-day mean",
+    "precipitation_units": "mm, 14-day total",
+    "target_start_lead_days": 15,
+    "target_end_lead_days": 28,
+    "init_cadence_days": 14,
+    "regions_file": "region_grid.csv",
+    "region_weighting": "cos(latitude); identical complete fixed grid for all fields",
+    "calibration_not_direct_forecast": true,
+    "anomaly_reference": "None in input; trainer fits training-only climatology",
+    "primary_enso_features": "None",
+    "retrospective_mei_sensitivity_file": "retrospective_mei_sensitivity_only.csv",
+    "enso_real_time_vintage_verified": false,
+    "observations_real_time_vintage_verified": false,
+    "persistence_observation_end_lag_days": 30,
+    "predeclared_validation_start": "2015-01-01",
+    "predeclared_test_start": "2018-01-01",
+    "required_partition_target_gap_days": 14,
+    "event_independent_holdout_established": false,
+    "future_target_used_in_forecast_features": false,
+    "forecast_publication_timestamps_verified": false,
+    "raw_file_manifest": "source/download_manifest.json",
+    "audit": "audit.json",
+    "limitations": "Retrospective CFSv2 calibration; final revised observations; six correlated regions; no demonstrated operational or ENSO skill; retrospective ENSO sensitivity kept separate; no SST feature acquired."
+  },
+  "runtime": {
+    "device": "cpu",
+    "seconds": 0.8834857399997418,
+    "best_epoch": 59,
+    "epochs_run": 99,
+    "parameter_count": 686,
+    "python": "3.12.14",
+    "numpy": "2.3.5",
+    "pandas": "2.2.3",
+    "sklearn": "1.8.0"
+  },
+  "split_audit": {
+    "train": {
+      "rows": 2490,
+      "initializations": 415,
+      "regions": [
+        "central_north",
+        "central_south",
+        "east_north",
+        "east_south",
+        "west_north",
+        "west_south"
+      ],
+      "initialization_min": "1999-01-01",
+      "initialization_max": "2014-11-14",
+      "target_start_min": "1999-01-16",
+      "target_end_max": "2014-12-12",
+      "initialization_years": [
+        1999,
+        2000,
+        2001,
+        2002,
+        2003,
+        2004,
+        2005,
+        2006,
+        2007,
+        2008,
+        2009,
+        2010,
+        2011,
+        2012,
+        2013,
+        2014
+      ]
+    },
+    "validation": {
+      "rows": 432,
+      "initializations": 72,
+      "regions": [
+        "central_north",
+        "central_south",
+        "east_north",
+        "east_south",
+        "west_north",
+        "west_south"
+      ],
+      "initialization_min": "2015-01-09",
+      "initialization_max": "2017-11-10",
+      "target_start_min": "2015-01-24",
+      "target_end_max": "2017-12-08",
+      "initialization_years": [
+        2015,
+        2016,
+        2017
+      ]
+    },
+    "test": {
+      "rows": 630,
+      "initializations": 105,
+      "regions": [
+        "central_north",
+        "central_south",
+        "east_north",
+        "east_south",
+        "west_north",
+        "west_south"
+      ],
+      "initialization_min": "2018-01-05",
+      "initialization_max": "2021-12-31",
+      "target_start_min": "2018-01-20",
+      "target_end_max": "2022-01-28",
+      "initialization_years": [
+        2018,
+        2019,
+        2020,
+        2021
+      ]
+    }
+  },
+  "metrics": {
+    "train": {
+      "overall": {
+        "raw_cfsv2": {
+          "temperature_c": {
+            "rmse": 2.1892853723116277,
+            "mae": 1.6836390484779116,
+            "bias": -0.782380468558233
+          },
+          "precipitation_14day_mm": {
+            "rmse": 18.714373148344354,
+            "mae": 14.408663677216866,
+            "bias": 5.967259096196788
+          }
+        },
+        "train_seasonal_climatology": {
+          "temperature_c": {
+            "rmse": 1.9356930150460347,
+            "mae": 1.4776572616503305,
+            "bias": 3.011388550392103e-14
+          },
+          "precipitation_14day_mm": {
+            "rmse": 15.225882115555441,
+            "mae": 11.182563642615161,
+            "bias": 4.337449631949206e-14
+          }
+        },
+        "train_region_bias_correction": {
+          "temperature_c": {
+            "rmse": 2.0175242907223825,
+            "mae": 1.5342970437699133,
+            "bias": 2.853585284177109e-16
+          },
+          "precipitation_14day_mm": {
+            "rmse": 17.460866875379978,
+            "mae": 12.83006839934302,
+            "bias": 0.005282516607023644
+          }
+        },
+        "ridge_residual": {
+          "temperature_c": {
+            "rmse": 1.8766511438345468,
+            "mae": 1.4324032685698078,
+            "bias": 3.081872106911278e-16
+          },
+          "precipitation_14day_mm": {
+            "rmse": 15.051550018427198,
+            "mae": 11.04193768419769,
+            "bias": 9.13147290936675e-17
+          }
+        },
+        "neural_residual_no_enso": {
+          "temperature_c": {
+            "rmse": 1.843851761727159,
+            "mae": 1.4020707980287905,
+            "bias": 0.014257765883882561
+          },
+          "precipitation_14day_mm": {
+            "rmse": 14.747215514254332,
+            "mae": 10.807144354469806,
+            "bias": 0.0070126794320407295
+          }
+        },
+        "lagged_observation_persistence": {
+          "temperature_c": {
+            "rmse": 8.283530598486484,
+            "mae": 7.201844142080322,
+            "bias": -0.04014408617670686
+          },
+          "precipitation_14day_mm": {
+            "rmse": 22.93877815471424,
+            "mae": 17.024915167690764,
+            "bias": 0.013805175843373492
+          }
+        }
+      },
+      "by_region": {
+        "central_north": {
+          "raw_cfsv2": {
+            "temperature_c": {
+              "rmse": 2.5351611796987528,
+              "mae": 1.9328459199518075,
+              "bias": -0.5307789714216867
+            },
+            "precipitation_14day_mm": {
+              "rmse": 16.268616873686877,
+              "mae": 13.589229699614457,
+              "bias": 10.853771908144578
+            }
+          },
+          "train_seasonal_climatology": {
+            "temperature_c": {
+              "rmse": 2.4689881528491715,
+              "mae": 1.8664042034365513,
+              "bias": 3.634896934984802e-14
+            },
+            "precipitation_14day_mm": {
+              "rmse": 10.989429171274145,
+              "mae": 8.539065121901428,
+              "bias": 4.574867927592741e-14
+            }
+          },
+          "train_region_bias_correction": {
+            "temperature_c": {
+              "rmse": 2.4789747660168118,
+              "mae": 1.879266834492205,
+              "bias": -4.2803779262656637e-16
+            },
+            "precipitation_14day_mm": {
+              "rmse": 12.118726432624054,
+              "mae": 9.31726749251247,
+              "bias": -5.204939558339047e-15
+            }
+          },
+          "ridge_residual": {
+            "temperature_c": {
+              "rmse": 2.375460628453883,
+              "mae": 1.799532128454553,
+              "bias": 0.0007295612477732101
+            },
+            "precipitation_14day_mm": {
+              "rmse": 10.818086754165519,
+              "mae": 8.452453532342657,
+              "bias": 0.006033347038056676
+            }
+          },
+          "neural_residual_no_enso": {
+            "temperature_c": {
+              "rmse": 2.3237533146483798,
+              "mae": 1.7457285059421952,
+              "bias": -0.02981854955202731
+            },
+            "precipitation_14day_mm": {
+              "rmse": 10.639882649010461,
+              "mae": 8.293730784032068,
+              "bias": 0.03127600408538606
+            }
+          },
+          "lagged_observation_persistence": {
+            "temperature_c": {
+              "rmse": 10.174154092121121,
+              "mae": 8.966507368650602,
+              "bias": -0.04699004436144584
+            },
+            "precipitation_14day_mm": {
+              "rmse": 18.55631605009409,
+              "mae": 14.482433706481926,
+              "bias": 0.010081910819277057
+            }
+          }
+        },
+        "central_south": {
+          "raw_cfsv2": {
+            "temperature_c": {
+              "rmse": 1.9754517135869758,
+              "mae": 1.5289650623614457,
+              "bias": -0.801636201686747
+            },
+            "precipitation_14day_mm": {
+              "rmse": 21.607762698795927,
+              "mae": 17.253947340240963,
+              "bias": 2.9109491425060234
+            }
+          },
+          "train_seasonal_climatology": {
+            "temperature_c": {
+              "rmse": 1.7720666623173802,
+              "mae": 1.3648992928438097,
+              "bias": 6.078136655297242e-14
+            },
+            "precipitation_14day_mm": {
+              "rmse": 17.73823883115804,
+              "mae": 14.208215758223512,
+              "bias": 5.944588863997754e-14
+            }
+          },
+          "train_region_bias_correction": {
+            "temperature_c": {
+              "rmse": 1.8054885413258552,
+              "mae": 1.4086871138679056,
+              "bias": 5.778510200458646e-16
+            },
+            "precipitation_14day_mm": {
+              "rmse": 21.410786625839325,
+              "mae": 17.005050239788996,
+              "bias": 9.588046554835087e-16
+            }
+          },
+          "ridge_residual": {
+            "temperature_c": {
+              "rmse": 1.698477227515944,
+              "mae": 1.3167860024952232,
+              "bias": -0.0004077032841304012
+            },
+            "precipitation_14day_mm": {
+              "rmse": 17.72048000693423,
+              "mae": 14.097430897766847,
+              "bias": -0.0049292814108036825
+            }
+          },
+          "neural_residual_no_enso": {
+            "temperature_c": {
+              "rmse": 1.6843040595011853,
+              "mae": 1.3093641812828147,
+              "bias": 0.05035794420392843
+            },
+            "precipitation_14day_mm": {
+              "rmse": 17.248203647670653,
+              "mae": 13.58991806187595,
+              "bias": 0.07365033172913352
+            }
+          },
+          "lagged_observation_persistence": {
+            "temperature_c": {
+              "rmse": 7.56521586394441,
+              "mae": 6.586909809325301,
+              "bias": -0.03196200551807233
+            },
+            "precipitation_14day_mm": {
+              "rmse": 25.021669803975236,
+              "mae": 19.564756456795184,
+              "bias": 0.07933415178313219
+            }
+          }
+        },
+        "east_north": {
+          "raw_cfsv2": {
+            "temperature_c": {
+              "rmse": 2.692712782512522,
+              "mae": 2.0568551326024096,
+              "bias": -1.408577062433735
+            },
+            "precipitation_14day_mm": {
+              "rmse": 20.66097299860078,
+              "mae": 16.46349454833735,
+              "bias": 7.837888328433737
+            }
+          },
+          "train_seasonal_climatology": {
+            "temperature_c": {
+              "rmse": 2.14718079246421,
+              "mae": 1.6393351352803571,
+              "bias": 7.973488001047679e-14
+            },
+            "precipitation_14day_mm": {
+              "rmse": 16.504074958439183,
+              "mae": 12.620890704302791,
+              "bias": 1.334108192058482e-13
+            }
+          },
+          "train_region_bias_correction": {
+            "temperature_c": {
+              "rmse": 2.294910191770449,
+              "mae": 1.753656496663086,
+              "bias": 8.089914280642105e-16
+            },
+            "precipitation_14day_mm": {
+              "rmse": 19.116571653931903,
+              "mae": 14.761852702961825,
+              "bias": 6.848604682025063e-17
+            }
+          },
+          "ridge_residual": {
+            "temperature_c": {
+              "rmse": 2.0859251018387233,
+              "mae": 1.5992428843552653,
+              "bias": -0.00037284417659841357
+            },
+            "precipitation_14day_mm": {
+              "rmse": 16.349626804463412,
+              "mae": 12.50633397344126,
+              "bias": 0.004354738189165236
+            }
+          },
+          "neural_residual_no_enso": {
+            "temperature_c": {
+              "rmse": 2.041425328730361,
+              "mae": 1.5453461343109702,
+              "bias": -0.001435733963797188
+            },
+            "precipitation_14day_mm": {
+              "rmse": 16.01096547644884,
+              "mae": 12.264226912023044,
+              "bias": -0.154390989289165
+            }
+          },
+          "lagged_observation_persistence": {
+            "temperature_c": {
+              "rmse": 9.060701418492862,
+              "mae": 8.002613155975904,
+              "bias": -0.04136402590361443
+            },
+            "precipitation_14day_mm": {
+              "rmse": 24.241382559892294,
+              "mae": 18.788257949518076,
+              "bias": -0.0453235020481926
+            }
+          }
+        },
+        "east_south": {
+          "raw_cfsv2": {
+            "temperature_c": {
+              "rmse": 2.0958427195247515,
+              "mae": 1.6674949607469882,
+              "bias": -0.9687718603614458
+            },
+            "precipitation_14day_mm": {
+              "rmse": 24.680911122799174,
+              "mae": 19.199981016457834,
+              "bias": 4.931273863060241
+            }
+          },
+          "train_seasonal_climatology": {
+            "temperature_c": {
+              "rmse": 1.7626029700679153,
+              "mae": 1.3482630574098242,
+              "bias": -1.7035904146537341e-15
+            },
+            "precipitation_14day_mm": {
+              "rmse": 21.80876100208628,
+              "mae": 16.894739480135815,
+              "bias": 2.2771610567733332e-15
+            }
+          },
+          "train_region_bias_correction": {
+            "temperature_c": {
+              "rmse": 1.8585041801289361,
+              "mae": 1.3832147297047463,
+              "bias": -2.2257965216581453e-16
+            },
+            "precipitation_14day_mm": {
+              "rmse": 24.183256851363318,
+              "mae": 18.378257933756654,
+              "bias": -1.7121511705062656e-16
+            }
+          },
+          "ridge_residual": {
+            "temperature_c": {
+              "rmse": 1.707738851911502,
+              "mae": 1.2962288183014412,
+              "bias": -0.0004918090340163366
+            },
+            "precipitation_14day_mm": {
+              "rmse": 21.45157414119893,
+              "mae": 16.594769022130443,
+              "bias": -0.002790027499022937
+            }
+          },
+          "neural_residual_no_enso": {
+            "temperature_c": {
+              "rmse": 1.6964933241269307,
+              "mae": 1.287755543568741,
+              "bias": 0.023123776090642416
+            },
+            "precipitation_14day_mm": {
+              "rmse": 20.984755885968248,
+              "mae": 16.33292150064372,
+              "bias": 0.09582917995285095
+            }
+          },
+          "lagged_observation_persistence": {
+            "temperature_c": {
+              "rmse": 6.738029039838071,
+              "mae": 5.787770087759037,
+              "bias": -0.014004078506024146
+            },
+            "precipitation_14day_mm": {
+              "rmse": 33.424713828470054,
+              "mae": 26.132284600024093,
+              "bias": 0.050361389662650545
+            }
+          }
+        },
+        "west_north": {
+          "raw_cfsv2": {
+            "temperature_c": {
+              "rmse": 2.0177315298912957,
+              "mae": 1.6081193284096384,
+              "bias": -0.5358675074457832
+            },
+            "precipitation_14day_mm": {
+              "rmse": 13.661673664372529,
+              "mae": 10.937118117397592,
+              "bias": 7.530883894072289
+            }
+          },
+          "train_seasonal_climatology": {
+            "temperature_c": {
+              "rmse": 1.8004845986380968,
+              "mae": 1.430456132969469,
+              "bias": 1.1942254414281202e-14
+            },
+            "precipitation_14day_mm": {
+              "rmse": 10.166511133816648,
+              "mae": 7.744125836420472,
+              "bias": 2.1778562888839697e-14
+            }
+          },
+          "train_region_bias_correction": {
+            "temperature_c": {
+              "rmse": 1.9452728706228626,
+              "mae": 1.533975690898766,
+              "bias": 1.1985058193543859e-16
+            },
+            "precipitation_14day_mm": {
+              "rmse": 11.392988289671573,
+              "mae": 8.767529515688489,
+              "bias": 0.0058026886559372414
+            }
+          },
+          "ridge_residual": {
+            "temperature_c": {
+              "rmse": 1.7697671451300492,
+              "mae": 1.4027830758768138,
+              "bias": 0.0006671106849101379
+            },
+            "precipitation_14day_mm": {
+              "rmse": 10.053204740145466,
+              "mae": 7.715943697711397,
+              "bias": 0.0033638463127269726
+            }
+          },
+          "neural_residual_no_enso": {
+            "temperature_c": {
+              "rmse": 1.7277456401732785,
+              "mae": 1.3743193836664158,
+              "bias": 0.020517131597107545
+            },
+            "precipitation_14day_mm": {
+              "rmse": 9.929062427164272,
+              "mae": 7.541284350380177,
+              "bias": -0.05088023288901829
+            }
+          },
+          "lagged_observation_persistence": {
+            "temperature_c": {
+              "rmse": 8.330588392084037,
+              "mae": 7.465184610987952,
+              "bias": -0.04957836824096379
+            },
+            "precipitation_14day_mm": {
+              "rmse": 15.530948930145126,
+              "mae": 12.019499262024096,
+              "bias": 0.029869139566264927
+            }
+          }
+        },
+        "west_south": {
+          "raw_cfsv2": {
+            "temperature_c": {
+              "rmse": 1.6473832607902685,
+              "mae": 1.3075538867951808,
+              "bias": -0.448651208
+            },
+            "precipitation_14day_mm": {
+              "rmse": 12.13007682458421,
+              "mae": 9.008211341253011,
+              "bias": 1.7387874409638555
+            }
+          },
+          "train_seasonal_climatology": {
+            "temperature_c": {
+              "rmse": 1.5120921138705052,
+              "mae": 1.2165857479619717,
+              "bias": -6.452669723845488e-15
+            },
+            "precipitation_14day_mm": {
+              "rmse": 10.207240152224095,
+              "mae": 7.088344954706959,
+              "bias": -3.2017226888467163e-15
+            }
+          },
+          "train_region_bias_correction": {
+            "temperature_c": {
+              "rmse": 1.5851131510059837,
+              "mae": 1.246981396992771,
+              "bias": 8.903186086632581e-16
+            },
+            "precipitation_14day_mm": {
+              "rmse": 11.997187672322735,
+              "mae": 8.750452511349687,
+              "bias": 0.025892410986209605
+            }
+          },
+          "ridge_residual": {
+            "temperature_c": {
+              "rmse": 1.4845025225366395,
+              "mae": 1.1798467019355503,
+              "bias": -0.00012431543793637754
+            },
+            "precipitation_14day_mm": {
+              "rmse": 9.985052815014102,
+              "mae": 6.884694981793532,
+              "bias": -0.006032622630122488
+            }
+          },
+          "neural_residual_no_enso": {
+            "temperature_c": {
+              "rmse": 1.4599364076656578,
+              "mae": 1.1499110394016048,
+              "bias": 0.022802026927441463
+            },
+            "precipitation_14day_mm": {
+              "rmse": 9.943705794255388,
+              "mae": 6.820784517863866,
+              "bias": 0.046591783003057205
+            }
+          },
+          "lagged_observation_persistence": {
+            "temperature_c": {
+              "rmse": 7.35250460747662,
+              "mae": 6.4020798197831335,
+              "bias": -0.05696599453012059
+            },
+            "precipitation_14day_mm": {
+              "rmse": 15.512509038066058,
+              "mae": 11.162259031301204,
+              "bias": -0.04149203472289156
+            }
+          }
+        }
+      }
+    },
+    "validation": {
+      "overall": {
+        "raw_cfsv2": {
+          "temperature_c": {
+            "rmse": 2.423215519141546,
+            "mae": 1.9426922522453705,
+            "bias": -1.1836208907638888
+          },
+          "precipitation_14day_mm": {
+            "rmse": 19.90106753898789,
+            "mae": 15.798749141574072,
+            "bias": 7.315702929166666
+          }
+        },
+        "train_seasonal_climatology": {
+          "temperature_c": {
+            "rmse": 2.2786136934051293,
+            "mae": 1.7415071025670623,
+            "bias": -0.8639629384652413
+          },
+          "precipitation_14day_mm": {
+            "rmse": 15.703862331602943,
+            "mae": 11.558428238249192,
+            "bias": -2.229526036215701
+          }
+        },
+        "train_region_bias_correction": {
+          "temperature_c": {
+            "rmse": 2.137524824180924,
+            "mae": 1.6669422323154282,
+            "bias": -0.40124042220565564
+          },
+          "precipitation_14day_mm": {
+            "rmse": 18.376853584903348,
+            "mae": 13.894157703809684,
+            "bias": 1.3517172593169324
+          }
+        },
+        "ridge_residual": {
+          "temperature_c": {
+            "rmse": 2.1204127686644854,
+            "mae": 1.6372196456371098,
+            "bias": -0.6623331164534945
+          },
+          "precipitation_14day_mm": {
+            "rmse": 15.523307179311914,
+            "mae": 11.506370748997941,
+            "bias": -1.4438799388326642
+          }
+        },
+        "neural_residual_no_enso": {
+          "temperature_c": {
+            "rmse": 2.1026180864244064,
+            "mae": 1.611113192359294,
+            "bias": -0.6682380431424091
+          },
+          "precipitation_14day_mm": {
+            "rmse": 15.758960145169732,
+            "mae": 11.643682449064327,
+            "bias": -1.286543364929675
+          }
+        },
+        "lagged_observation_persistence": {
+          "temperature_c": {
+            "rmse": 8.095364295246913,
+            "mae": 7.071985081134259,
+            "bias": -0.6180234190972221
+          },
+          "precipitation_14day_mm": {
+            "rmse": 24.027311145130184,
+            "mae": 18.240845544606483,
+            "bias": 0.06551661243055563
+          }
+        }
+      },
+      "by_region": {
+        "central_north": {
+          "raw_cfsv2": {
+            "temperature_c": {
+              "rmse": 2.4955080929604976,
+              "mae": 1.966003703888889,
+              "bias": -0.873624765
+            },
+            "precipitation_14day_mm": {
+              "rmse": 17.609473063234255,
+              "mae": 14.828400484305556,
+              "bias": 10.521077979861111
+            }
+          },
+          "train_seasonal_climatology": {
+            "temperature_c": {
+              "rmse": 2.492382868750078,
+              "mae": 1.8667494669342777,
+              "bias": -1.0285728429258456
+            },
+            "precipitation_14day_mm": {
+              "rmse": 11.774336498117295,
+              "mae": 9.3408998500707,
+              "bias": -2.763018137893427
+            }
+          },
+          "train_region_bias_correction": {
+            "temperature_c": {
+              "rmse": 2.362601034915624,
+              "mae": 1.7806914143273092,
+              "bias": -0.34284579357831363
+            },
+            "precipitation_14day_mm": {
+              "rmse": 14.124841413494565,
+              "mae": 11.444829750345045,
+              "bias": -0.3326939282834722
+            }
+          },
+          "ridge_residual": {
+            "temperature_c": {
+              "rmse": 2.2850663189701956,
+              "mae": 1.726836282812512,
+              "bias": -0.7347992163754271
+            },
+            "precipitation_14day_mm": {
+              "rmse": 11.70220332972268,
+              "mae": 9.254089003551124,
+              "bias": -2.3527999673807005
+            }
+          },
+          "neural_residual_no_enso": {
+            "temperature_c": {
+              "rmse": 2.2810268118374206,
+              "mae": 1.741267889381939,
+              "bias": -0.7124957218570669
+            },
+            "precipitation_14day_mm": {
+              "rmse": 11.778755332211485,
+              "mae": 9.36307625597364,
+              "bias": -2.192752866120818
+            }
+          },
+          "lagged_observation_persistence": {
+            "temperature_c": {
+              "rmse": 9.659499444455433,
+              "mae": 8.599245690833333,
+              "bias": -0.8065722474999999
+            },
+            "precipitation_14day_mm": {
+              "rmse": 22.17124410639426,
+              "mae": 18.015926280277778,
+              "bias": -0.6786955241666672
+            }
+          }
+        },
+        "central_south": {
+          "raw_cfsv2": {
+            "temperature_c": {
+              "rmse": 2.3879291213821556,
+              "mae": 1.8991721711111111,
+              "bias": -1.4920930075
+            },
+            "precipitation_14day_mm": {
+              "rmse": 22.90126602316354,
+              "mae": 18.614879689305557,
+              "bias": 3.4934352940277775
+            }
+          },
+          "train_seasonal_climatology": {
+            "temperature_c": {
+              "rmse": 1.9610187487556536,
+              "mae": 1.4696419553536968,
+              "bias": -0.8254999679645988
+            },
+            "precipitation_14day_mm": {
+              "rmse": 21.917315276711197,
+              "mae": 17.038110721105202,
+              "bias": -5.442933418461877
+            }
+          },
+          "train_region_bias_correction": {
+            "temperature_c": {
+              "rmse": 1.988113313271756,
+              "mae": 1.4944676873092366,
+              "bias": -0.6904568058132525
+            },
+            "precipitation_14day_mm": {
+              "rmse": 22.640741715475233,
+              "mae": 18.118516078541163,
+              "bias": 0.5824861515217543
+            }
+          },
+          "ridge_residual": {
+            "temperature_c": {
+              "rmse": 1.912601391677088,
+              "mae": 1.4319256117815893,
+              "bias": -0.7570620953767453
+            },
+            "precipitation_14day_mm": {
+              "rmse": 20.886626572735885,
+              "mae": 16.465223153703747,
+              "bias": -3.9105573840317316
+            }
+          },
+          "neural_residual_no_enso": {
+            "temperature_c": {
+              "rmse": 1.9165768025208272,
+              "mae": 1.4412219309362808,
+              "bias": -0.7514939478074935
+            },
+            "precipitation_14day_mm": {
+              "rmse": 20.70229544053141,
+              "mae": 16.252452705464574,
+              "bias": -3.8935185398482366
+            }
+          },
+          "lagged_observation_persistence": {
+            "temperature_c": {
+              "rmse": 7.075497658412305,
+              "mae": 6.2420721341666665,
+              "bias": -0.5931274727777777
+            },
+            "precipitation_14day_mm": {
+              "rmse": 33.343742510007004,
+              "mae": 26.614563354583336,
+              "bias": 0.5251259012499992
+            }
+          }
+        },
+        "east_north": {
+          "raw_cfsv2": {
+            "temperature_c": {
+              "rmse": 2.910436643864132,
+              "mae": 2.2973824608333335,
+              "bias": -1.4729882341666667
+            },
+            "precipitation_14day_mm": {
+              "rmse": 20.20587885685166,
+              "mae": 16.919364137916666,
+              "bias": 10.505063533472223
+            }
+          },
+          "train_seasonal_climatology": {
+            "temperature_c": {
+              "rmse": 2.7316313351040256,
+              "mae": 2.1124409011089735,
+              "bias": -0.7595044638562576
+            },
+            "precipitation_14day_mm": {
+              "rmse": 14.154481038360485,
+              "mae": 11.024411578867168,
+              "bias": 2.085020868950647
+            }
+          },
+          "train_region_bias_correction": {
+            "temperature_c": {
+              "rmse": 2.510995005769164,
+              "mae": 1.9228114011111108,
+              "bias": -0.06441117173293076
+            },
+            "precipitation_14day_mm": {
+              "rmse": 17.465251332570315,
+              "mae": 13.919192186511042,
+              "bias": 2.667175205038488
+            }
+          },
+          "ridge_residual": {
+            "temperature_c": {
+              "rmse": 2.5243856662861113,
+              "mae": 1.9021311015159672,
+              "bias": -0.4665845291331274
+            },
+            "precipitation_14day_mm": {
+              "rmse": 14.232991575116346,
+              "mae": 11.16226923628523,
+              "bias": 2.0066036949103823
+            }
+          },
+          "neural_residual_no_enso": {
+            "temperature_c": {
+              "rmse": 2.5603485929749423,
+              "mae": 1.9307379638968958,
+              "bias": -0.5100515411610167
+            },
+            "precipitation_14day_mm": {
+              "rmse": 14.69993311734235,
+              "mae": 11.409398540295538,
+              "bias": 1.5742811921735393
+            }
+          },
+          "lagged_observation_persistence": {
+            "temperature_c": {
+              "rmse": 9.204817913838136,
+              "mae": 8.016307276666668,
+              "bias": -0.7003997580555557
+            },
+            "precipitation_14day_mm": {
+              "rmse": 20.82477883232441,
+              "mae": 16.295151585,
+              "bias": -0.4593525108333323
+            }
+          }
+        },
+        "east_south": {
+          "raw_cfsv2": {
+            "temperature_c": {
+              "rmse": 2.497539530537983,
+              "mae": 2.1382247281944444,
+              "bias": -1.5676480376388888
+            },
+            "precipitation_14day_mm": {
+              "rmse": 27.995131988476018,
+              "mae": 23.26719774958333,
+              "bias": 8.150127705416667
+            }
+          },
+          "train_seasonal_climatology": {
+            "temperature_c": {
+              "rmse": 2.1730453785661425,
+              "mae": 1.662555230129104,
+              "bias": -1.0981424404447095
+            },
+            "precipitation_14day_mm": {
+              "rmse": 20.95628355808584,
+              "mae": 16.642692901565585,
+              "bias": -2.7435392777394214
+            }
+          },
+          "train_region_bias_correction": {
+            "temperature_c": {
+              "rmse": 2.034412940481178,
+              "mae": 1.5868127410893575,
+              "bias": -0.5988761772774432
+            },
+            "precipitation_14day_mm": {
+              "rmse": 26.975245198070873,
+              "mae": 22.383329576658298,
+              "bias": 3.2188538423564257
+            }
+          },
+          "ridge_residual": {
+            "temperature_c": {
+              "rmse": 2.0357994075114254,
+              "mae": 1.5777616533696588,
+              "bias": -0.876190867860364
+            },
+            "precipitation_14day_mm": {
+              "rmse": 21.16703096776103,
+              "mae": 16.660977420248116,
+              "bias": -1.3360304412893125
+            }
+          },
+          "neural_residual_no_enso": {
+            "temperature_c": {
+              "rmse": 2.0030965669154943,
+              "mae": 1.548388915154458,
+              "bias": -0.8502846638645237
+            },
+            "precipitation_14day_mm": {
+              "rmse": 21.787230823405636,
+              "mae": 17.064525550105014,
+              "bias": -0.19188422332339647
+            }
+          },
+          "lagged_observation_persistence": {
+            "temperature_c": {
+              "rmse": 6.499601288889148,
+              "mae": 5.701938706388889,
+              "bias": -0.46162003277777763
+            },
+            "precipitation_14day_mm": {
+              "rmse": 30.60352317200359,
+              "mae": 24.541298174166666,
+              "bias": -0.2112792286111112
+            }
+          }
+        },
+        "west_north": {
+          "raw_cfsv2": {
+            "temperature_c": {
+              "rmse": 2.187068591251053,
+              "mae": 1.7690897488888888,
+              "bias": -0.718021923611111
+            },
+            "precipitation_14day_mm": {
+              "rmse": 14.278551378665577,
+              "mae": 12.355915032638888,
+              "bias": 7.679851365972222
+            }
+          },
+          "train_seasonal_climatology": {
+            "temperature_c": {
+              "rmse": 2.268730189000133,
+              "mae": 1.802417578888853,
+              "bias": -0.7705281970889669
+            },
+            "precipitation_14day_mm": {
+              "rmse": 11.946679793663384,
+              "mae": 8.48498141714456,
+              "bias": -2.9402483957981946
+            }
+          },
+          "train_region_bias_correction": {
+            "temperature_c": {
+              "rmse": 2.073859631551566,
+              "mae": 1.7341708405555554,
+              "bias": -0.18215441616532768
+            },
+            "precipitation_14day_mm": {
+              "rmse": 12.038235077346327,
+              "mae": 9.09548441885308,
+              "bias": 0.14896747189992562
+            }
+          },
+          "ridge_residual": {
+            "temperature_c": {
+              "rmse": 2.086710361046261,
+              "mae": 1.7122131952317288,
+              "bias": -0.5170497095255637
+            },
+            "precipitation_14day_mm": {
+              "rmse": 11.87258185562662,
+              "mae": 8.503951435917715,
+              "bias": -2.3204068770681476
+            }
+          },
+          "neural_residual_no_enso": {
+            "temperature_c": {
+              "rmse": 2.025938728124412,
+              "mae": 1.6342231450418419,
+              "bias": -0.5453625759462466
+            },
+            "precipitation_14day_mm": {
+              "rmse": 12.043107608133855,
+              "mae": 8.693700432938085,
+              "bias": -2.7041337047717255
+            }
+          },
+          "lagged_observation_persistence": {
+            "temperature_c": {
+              "rmse": 8.428811583685919,
+              "mae": 7.571152977916666,
+              "bias": -0.5520865473611111
+            },
+            "precipitation_14day_mm": {
+              "rmse": 16.910872350649033,
+              "mae": 13.078435954444444,
+              "bias": 0.5674685647222221
+            }
+          }
+        },
+        "west_south": {
+          "raw_cfsv2": {
+            "temperature_c": {
+              "rmse": 1.9520400598067769,
+              "mae": 1.5862807005555557,
+              "bias": -0.9773493766666669
+            },
+            "precipitation_14day_mm": {
+              "rmse": 12.077724256519348,
+              "mae": 8.806737755694444,
+              "bias": 3.5446616962499995
+            }
+          },
+          "train_seasonal_climatology": {
+            "temperature_c": {
+              "rmse": 1.9400625367548547,
+              "mae": 1.5352374829874675,
+              "bias": -0.7015297185110685
+            },
+            "precipitation_14day_mm": {
+              "rmse": 8.855830381474203,
+              "mae": 6.819472960741943,
+              "bias": -1.572437856351934
+            }
+          },
+          "train_region_bias_correction": {
+            "temperature_c": {
+              "rmse": 1.7705282670918332,
+              "mae": 1.4826993095,
+              "bias": -0.5286981686666657
+            },
+            "precipitation_14day_mm": {
+              "rmse": 11.68418565066786,
+              "mae": 8.403594211949464,
+              "bias": 1.8255148133684738
+            }
+          },
+          "ridge_residual": {
+            "temperature_c": {
+              "rmse": 1.7960978093864328,
+              "mae": 1.4724500291112028,
+              "bias": -0.6223122804497395
+            },
+            "precipitation_14day_mm": {
+              "rmse": 9.003677762699526,
+              "mae": 6.991714244281715,
+              "bias": -0.7500886581364742
+            }
+          },
+          "neural_residual_no_enso": {
+            "temperature_c": {
+              "rmse": 1.725531351155429,
+              "mae": 1.3708393097443508,
+              "bias": -0.639739808218106
+            },
+            "precipitation_14day_mm": {
+              "rmse": 9.323997747283814,
+              "mae": 7.078941209609116,
+              "bias": -0.31125204768741344
+            }
+          },
+          "lagged_observation_persistence": {
+            "temperature_c": {
+              "rmse": 7.198790686649786,
+              "mae": 6.301193700833333,
+              "bias": -0.5943344561111112
+            },
+            "precipitation_14day_mm": {
+              "rmse": 14.292522792561115,
+              "mae": 10.899697919166666,
+              "bias": 0.6498324722222222
+            }
+          }
+        }
+      }
+    },
+    "test": {
+      "overall": {
+        "raw_cfsv2": {
+          "temperature_c": {
+            "rmse": 2.2378163179583934,
+            "mae": 1.702451696920635,
+            "bias": -0.8367021588571429
+          },
+          "precipitation_14day_mm": {
+            "rmse": 18.261295976723403,
+            "mae": 14.332368657190477,
+            "bias": 4.828201297698413
+          }
+        },
+        "train_seasonal_climatology": {
+          "temperature_c": {
+            "rmse": 2.000873352814549,
+            "mae": 1.5147591465444312,
+            "bias": -0.4371362389592313
+          },
+          "precipitation_14day_mm": {
+            "rmse": 15.830999008691604,
+            "mae": 11.543178471052343,
+            "bias": -2.2408176534567374
+          }
+        },
+        "train_region_bias_correction": {
+          "temperature_c": {
+            "rmse": 2.0121051739461486,
+            "mae": 1.5007223254765727,
+            "bias": -0.054321690298909646
+          },
+          "precipitation_14day_mm": {
+            "rmse": 17.395613830760098,
+            "mae": 12.841238584006236,
+            "bias": -1.1379785512413485
+          }
+        },
+        "ridge_residual": {
+          "temperature_c": {
+            "rmse": 1.934558367281435,
+            "mae": 1.4500162223068143,
+            "bias": -0.27549754826157075
+          },
+          "precipitation_14day_mm": {
+            "rmse": 15.777886304499738,
+            "mae": 11.526489260506395,
+            "bias": -2.0941542749655775
+          }
+        },
+        "neural_residual_no_enso": {
+          "temperature_c": {
+            "rmse": 1.940641685592445,
+            "mae": 1.4567840276524513,
+            "bias": -0.27209253299222574
+          },
+          "precipitation_14day_mm": {
+            "rmse": 15.81491426369294,
+            "mae": 11.494948382971321,
+            "bias": -2.18575875827323
+          }
+        },
+        "lagged_observation_persistence": {
+          "temperature_c": {
+            "rmse": 8.350738450963675,
+            "mae": 7.1414754663333335,
+            "bias": -0.03352076500000014
+          },
+          "precipitation_14day_mm": {
+            "rmse": 21.636554967132785,
+            "mae": 16.51320114363492,
+            "bias": -0.2546118670952382
+          }
+        }
+      },
+      "by_region": {
+        "central_north": {
+          "raw_cfsv2": {
+            "temperature_c": {
+              "rmse": 2.29264137132408,
+              "mae": 1.813638357047619,
+              "bias": -0.2048357821904762
+            },
+            "precipitation_14day_mm": {
+              "rmse": 16.961354027350623,
+              "mae": 14.240071999428572,
+              "bias": 8.911497335619048
+            }
+          },
+          "train_seasonal_climatology": {
+            "temperature_c": {
+              "rmse": 2.4531091435727586,
+              "mae": 1.9320053964064894,
+              "bias": -0.05354282080572143
+            },
+            "precipitation_14day_mm": {
+              "rmse": 12.307162489175454,
+              "mae": 9.363105730326522,
+              "bias": -2.0940518643707815
+            }
+          },
+          "train_region_bias_correction": {
+            "temperature_c": {
+              "rmse": 2.306617810225046,
+              "mae": 1.7929149868697647,
+              "bias": 0.32594318923121013
+            },
+            "precipitation_14day_mm": {
+              "rmse": 14.561771052775724,
+              "mae": 11.34343267796856,
+              "bias": -1.942274572525536
+            }
+          },
+          "ridge_residual": {
+            "temperature_c": {
+              "rmse": 2.3283938762287257,
+              "mae": 1.8245275054809205,
+              "bias": 0.10608054376186307
+            },
+            "precipitation_14day_mm": {
+              "rmse": 12.57382832406283,
+              "mae": 9.714718896481388,
+              "bias": -2.187357681282155
+            }
+          },
+          "neural_residual_no_enso": {
+            "temperature_c": {
+              "rmse": 2.3035327814579345,
+              "mae": 1.7849227490910486,
+              "bias": 0.06078929261270395
+            },
+            "precipitation_14day_mm": {
+              "rmse": 12.489085926062588,
+              "mae": 9.54915721978512,
+              "bias": -2.1146710990453794
+            }
+          },
+          "lagged_observation_persistence": {
+            "temperature_c": {
+              "rmse": 10.405312049922564,
+              "mae": 9.137813861619048,
+              "bias": -0.009923887904761943
+            },
+            "precipitation_14day_mm": {
+              "rmse": 19.284925603468125,
+              "mae": 15.54582620047619,
+              "bias": -0.22524735571428559
+            }
+          }
+        },
+        "central_south": {
+          "raw_cfsv2": {
+            "temperature_c": {
+              "rmse": 2.1682248104844772,
+              "mae": 1.714714153238095,
+              "bias": -0.8635702393333333
+            },
+            "precipitation_14day_mm": {
+              "rmse": 21.327673537153473,
+              "mae": 17.029028680761904,
+              "bias": -0.16409466304761924
+            }
+          },
+          "train_seasonal_climatology": {
+            "temperature_c": {
+              "rmse": 1.9519369090992553,
+              "mae": 1.4225584238467985,
+              "bias": -0.33798127712605536
+            },
+            "precipitation_14day_mm": {
+              "rmse": 18.93725370402746,
+              "mae": 14.68734359361843,
+              "bias": -5.09535754741412
+            }
+          },
+          "train_region_bias_correction": {
+            "temperature_c": {
+              "rmse": 1.989794234476878,
+              "mae": 1.5291854983006312,
+              "bias": -0.06193403764658588
+            },
+            "precipitation_14day_mm": {
+              "rmse": 21.547589792248914,
+              "mae": 16.944975742357315,
+              "bias": -3.0750438055536424
+            }
+          },
+          "ridge_residual": {
+            "temperature_c": {
+              "rmse": 1.9042083748758982,
+              "mae": 1.4173380781641036,
+              "bias": -0.22003435161991147
+            },
+            "precipitation_14day_mm": {
+              "rmse": 18.97310013412175,
+              "mae": 14.501055681891033,
+              "bias": -4.6774692184748385
+            }
+          },
+          "neural_residual_no_enso": {
+            "temperature_c": {
+              "rmse": 1.8781415560696726,
+              "mae": 1.3913368611087302,
+              "bias": -0.17278156331568
+            },
+            "precipitation_14day_mm": {
+              "rmse": 18.97124504774403,
+              "mae": 14.575561148966084,
+              "bias": -5.106910149156943
+            }
+          },
+          "lagged_observation_persistence": {
+            "temperature_c": {
+              "rmse": 7.597282291478853,
+              "mae": 6.412933743142857,
+              "bias": -0.12405010561904777
+            },
+            "precipitation_14day_mm": {
+              "rmse": 23.404628587664618,
+              "mae": 18.87462690552381,
+              "bias": -0.03629997676190396
+            }
+          }
+        },
+        "east_north": {
+          "raw_cfsv2": {
+            "temperature_c": {
+              "rmse": 2.7077625690705736,
+              "mae": 2.091869818857143,
+              "bias": -1.7510283874285715
+            },
+            "precipitation_14day_mm": {
+              "rmse": 19.79956419417742,
+              "mae": 16.555257762857142,
+              "bias": 5.6177277838095225
+            }
+          },
+          "train_seasonal_climatology": {
+            "temperature_c": {
+              "rmse": 2.138598672355705,
+              "mae": 1.6958460796292054,
+              "bias": -0.6080998460827227
+            },
+            "precipitation_14day_mm": {
+              "rmse": 15.587657087453797,
+              "mae": 12.252560612612484,
+              "bias": -1.6759070520651589
+            }
+          },
+          "train_region_bias_correction": {
+            "temperature_c": {
+              "rmse": 2.09359753220854,
+              "mae": 1.4846456304580604,
+              "bias": -0.34245132499483555
+            },
+            "precipitation_14day_mm": {
+              "rmse": 19.11525541734332,
+              "mae": 15.196436921413655,
+              "bias": -2.220160544624211
+            }
+          },
+          "ridge_residual": {
+            "temperature_c": {
+              "rmse": 2.038978553746814,
+              "mae": 1.5456706672874672,
+              "bias": -0.4985970467063815
+            },
+            "precipitation_14day_mm": {
+              "rmse": 15.95752604319176,
+              "mae": 12.615524980358853,
+              "bias": -1.9204551773922753
+            }
+          },
+          "neural_residual_no_enso": {
+            "temperature_c": {
+              "rmse": 2.0987946558847788,
+              "mae": 1.6016867502026737,
+              "bias": -0.5281726543198566
+            },
+            "precipitation_14day_mm": {
+              "rmse": 16.199340755891438,
+              "mae": 12.516949554889502,
+              "bias": -2.173055902496766
+            }
+          },
+          "lagged_observation_persistence": {
+            "temperature_c": {
+              "rmse": 9.059483238471877,
+              "mae": 7.841493098190476,
+              "bias": -0.08873640257142855
+            },
+            "precipitation_14day_mm": {
+              "rmse": 20.3805562495084,
+              "mae": 16.07401749847619,
+              "bias": -0.17592309733333306
+            }
+          }
+        },
+        "east_south": {
+          "raw_cfsv2": {
+            "temperature_c": {
+              "rmse": 2.584286319144222,
+              "mae": 1.9969625663809525,
+              "bias": -1.4868348246666667
+            },
+            "precipitation_14day_mm": {
+              "rmse": 23.377125569462333,
+              "mae": 18.030481731904764,
+              "bias": 2.4907176098095234
+            }
+          },
+          "train_seasonal_climatology": {
+            "temperature_c": {
+              "rmse": 2.0504232984449544,
+              "mae": 1.5093439083221263,
+              "bias": -0.8485762330632104
+            },
+            "precipitation_14day_mm": {
+              "rmse": 23.280405622235524,
+              "mae": 17.313927148310896,
+              "bias": -5.8562337362295445
+            }
+          },
+          "train_region_bias_correction": {
+            "temperature_c": {
+              "rmse": 2.1762920802270878,
+              "mae": 1.6545141527917377,
+              "bias": -0.5180629643052211
+            },
+            "precipitation_14day_mm": {
+              "rmse": 23.37183434187132,
+              "mae": 17.382439001341133,
+              "bias": -2.4405562532507177
+            }
+          },
+          "ridge_residual": {
+            "temperature_c": {
+              "rmse": 2.014987793692382,
+              "mae": 1.4896991382213538,
+              "bias": -0.7060361397328133
+            },
+            "precipitation_14day_mm": {
+              "rmse": 22.74468485950329,
+              "mae": 17.00317619390007,
+              "bias": -5.087551047167585
+            }
+          },
+          "neural_residual_no_enso": {
+            "temperature_c": {
+              "rmse": 2.0434939834609565,
+              "mae": 1.537536407003544,
+              "bias": -0.6760015575116337
+            },
+            "precipitation_14day_mm": {
+              "rmse": 22.78922108742963,
+              "mae": 17.084210155669467,
+              "bias": -4.870130245619366
+            }
+          },
+          "lagged_observation_persistence": {
+            "temperature_c": {
+              "rmse": 6.579732851197666,
+              "mae": 5.506210229714286,
+              "bias": -0.11169101923809543
+            },
+            "precipitation_14day_mm": {
+              "rmse": 31.48656394693203,
+              "mae": 25.367389374190477,
+              "bias": -0.37761873304761995
+            }
+          }
+        },
+        "west_north": {
+          "raw_cfsv2": {
+            "temperature_c": {
+              "rmse": 1.8682964839616347,
+              "mae": 1.3804120475238095,
+              "bias": -0.19832179552380938
+            },
+            "precipitation_14day_mm": {
+              "rmse": 14.315770319676739,
+              "mae": 11.68252885295238,
+              "bias": 9.471151781714285
+            }
+          },
+          "train_seasonal_climatology": {
+            "temperature_c": {
+              "rmse": 1.748142952573156,
+              "mae": 1.3194218307904275,
+              "bias": -0.2740303792873972
+            },
+            "precipitation_14day_mm": {
+              "rmse": 9.757294724671466,
+              "mae": 7.725272982555862,
+              "bias": 1.2728440539427992
+            }
+          },
+          "train_region_bias_correction": {
+            "temperature_c": {
+              "rmse": 1.888157124034049,
+              "mae": 1.3878697272582905,
+              "bias": 0.3375457119219738
+            },
+            "precipitation_14day_mm": {
+              "rmse": 10.90885893433784,
+              "mae": 8.244874641263108,
+              "bias": 1.940267887641989
+            }
+          },
+          "ridge_residual": {
+            "temperature_c": {
+              "rmse": 1.7354603477610167,
+              "mae": 1.2667813828766317,
+              "bias": -0.01622837866191989
+            },
+            "precipitation_14day_mm": {
+              "rmse": 9.771691999329624,
+              "mae": 7.6380457212204,
+              "bias": 1.234902495129717
+            }
+          },
+          "neural_residual_no_enso": {
+            "temperature_c": {
+              "rmse": 1.7037511300005779,
+              "mae": 1.2401536165129035,
+              "bias": -0.012462435259863625
+            },
+            "precipitation_14day_mm": {
+              "rmse": 9.946403190238419,
+              "mae": 7.6584988122420725,
+              "bias": 1.0889514916136591
+            }
+          },
+          "lagged_observation_persistence": {
+            "temperature_c": {
+              "rmse": 8.396470648915306,
+              "mae": 7.339733338095239,
+              "bias": 0.06394109885714287
+            },
+            "precipitation_14day_mm": {
+              "rmse": 14.739245160311603,
+              "mae": 11.337359611523809,
+              "bias": -0.2747648671428572
+            }
+          }
+        },
+        "west_south": {
+          "raw_cfsv2": {
+            "temperature_c": {
+              "rmse": 1.6088760951232075,
+              "mae": 1.2171132384761905,
+              "bias": -0.5156219240000002
+            },
+            "precipitation_14day_mm": {
+              "rmse": 10.716266772199484,
+              "mae": 8.456842915238095,
+              "bias": 2.6422079382857144
+            }
+          },
+          "train_seasonal_climatology": {
+            "temperature_c": {
+              "rmse": 1.5360075227019958,
+              "mae": 1.2093792402715393,
+              "bias": -0.5005868773902813
+            },
+            "precipitation_14day_mm": {
+              "rmse": 10.652709117287156,
+              "mae": 7.916860758889865,
+              "bias": 0.0038002253963802905
+            }
+          },
+          "train_region_bias_correction": {
+            "temperature_c": {
+              "rmse": 1.5254839880349418,
+              "mae": 1.1552039571809523,
+              "bias": -0.06697071599999914
+            },
+            "precipitation_14day_mm": {
+              "rmse": 10.424089783845593,
+              "mae": 7.935272519693631,
+              "bias": 0.9098959808640277
+            }
+          },
+          "ridge_residual": {
+            "temperature_c": {
+              "rmse": 1.4758851278758784,
+              "mae": 1.1560805618104082,
+              "bias": -0.31816991661026134
+            },
+            "precipitation_14day_mm": {
+              "rmse": 10.398134385402162,
+              "mae": 7.686414089186615,
+              "bias": 0.07300497939367183
+            }
+          },
+          "neural_residual_no_enso": {
+            "temperature_c": {
+              "rmse": 1.5097308867071308,
+              "mae": 1.1850677819958075,
+              "bias": -0.3039262801590244
+            },
+            "precipitation_14day_mm": {
+              "rmse": 10.202230048259336,
+              "mae": 7.585313406275678,
+              "bias": 0.06126335506541704
+            }
+          },
+          "lagged_observation_persistence": {
+            "temperature_c": {
+              "rmse": 7.52010230557793,
+              "mae": 6.610668527238095,
+              "bias": 0.06933572647619038
+            },
+            "precipitation_14day_mm": {
+              "rmse": 16.283179667906914,
+              "mae": 11.879987271619047,
+              "bias": -0.4378171725714284
+            }
+          }
+        }
+      }
+    }
+  },
+  "caveats": [
+    "One seed and one fixed temporal split; no test-set tuning",
+    "Coarse regional means hide local extremes and spatial error; not local forecast validation",
+    "No ENSO features: revised MEI is not certified issuance-time vintage",
+    "Point forecasts only: no calibrated probabilities, empirical interval coverage, CRPS or reliability claim",
+    "Rows share times and spatial dependence; sample count is not independent event count",
+    "Historical final verification observations; this is retrospective, not simulated operational retraining",
+    "Validation/test years held out from fit; boundaries purged at least 14 days past final training/validation target",
+    "Uncertainty/significance of skill differences not established; no robust superiority claim"
+  ]
+}

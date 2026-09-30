@@ -1,0 +1,22 @@
+test_bad_inputs_fail (test_core.DataTests.test_bad_inputs_fail) ... ok
+test_boundary_purging (test_core.DataTests.test_boundary_purging) ... ok
+test_constant_feature_stability (test_core.DataTests.test_constant_feature_stability) ... ok
+test_duplicate_fails (test_core.DataTests.test_duplicate_fails) ... ok
+test_explicit_event_selection (test_core.DataTests.test_explicit_event_selection) ... ok
+test_fit_uses_training_rows_only (test_core.DataTests.test_fit_uses_training_rows_only) ... ok
+test_invalid_event_and_empty_split (test_core.DataTests.test_invalid_event_and_empty_split) ... ok
+test_no_enso_ablation_masks_all_enso_inputs (test_core.DataTests.test_no_enso_ablation_masks_all_enso_inputs) ... ok
+test_observation_latency_is_purged (test_core.DataTests.test_observation_latency_is_purged) ... ok
+test_provenance_cannot_be_silently_asserted (test_core.DataTests.test_provenance_cannot_be_silently_asserted) ... ok
+test_unknown_region_rejected (test_core.DataTests.test_unknown_region_rejected) ... ok
+test_valid_input (test_core.DataTests.test_valid_input) ... ok
+test_whole_event_overlap_is_purged (test_core.DataTests.test_whole_event_overlap_is_purged) ... ok
+test_group_counts_and_weeks (test_core.MetricTests.test_group_counts_and_weeks) ... ok
+test_metric_bad_inputs (test_core.MetricTests.test_metric_bad_inputs) ... ok
+test_rmse_exact (test_core.MetricTests.test_rmse_exact) ... ok
+test_two_epoch_training_creates_finite_artifacts (test_core.NeuralSmokeTests.test_two_epoch_training_creates_finite_artifacts) ... skipped 'PyTorch is not installed; neural execution unverified'
+
+----------------------------------------------------------------------
+Ran 17 tests in 0.003s
+
+OK (skipped=1)

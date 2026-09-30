@@ -1,0 +1,21 @@
+{
+  "config": {
+    "seed": 42,
+    "hidden_layers": [
+      24,
+      12
+    ],
+    "max_epochs": 400,
+    "patience": 40,
+    "learning_rate": 0.001,
+    "alpha": 0.01,
+    "ridge_alpha": 10.0,
+    "validation_start": "2015-01-01",
+    "test_start": "2018-01-01",
+    "purge_days": 14,
+    "climatology_harmonics": 2,
+    "enso_features": false
+  },
+  "dataset_sha256": "08e805b9c9d022e449def05d70b0e1a3b0f32bf849912c21bd4c00534634ea1b",
+  "manifest_sha256": "94871f1252dcdc5c9de066cf7bdcc11ac1de5739f61b1322a507947914820397"
+}

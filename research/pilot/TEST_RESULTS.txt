@@ -1,0 +1,11 @@
+test_duplicates_rejected (test_pilot.IntegrityTests.test_duplicates_rejected) ... ok
+test_overlapping_targets_rejected (test_pilot.IntegrityTests.test_overlapping_targets_rejected) ... ok
+test_real_splits_and_purge (test_pilot.IntegrityTests.test_real_splits_and_purge) ... ok
+test_saved_model_and_metrics (test_pilot.IntegrityTests.test_saved_model_and_metrics) ... ok
+
+----------------------------------------------------------------------
+Ran 4 tests in 0.175s
+
+OK
+
+Reproducibility: independent rerun model.json and predictions.csv are byte-identical.
