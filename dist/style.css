@@ -16,3 +16,5 @@ html{scroll-padding-top:20px}body{padding-bottom:env(safe-area-inset-bottom)}[hi
 @media(max-width:760px){#touchGlobe{min-width:76px;max-width:84px;line-height:1.2}.mapreading{max-width:calc(100% - 115px)}}
 
 .forecast-settings{margin-top:10px}.forecast-settings>summary{font-size:14px;color:#c8dedf;cursor:pointer;min-height:40px;padding:8px 4px}.forecast-settings[open]>summary{margin-bottom:8px}.forecast-settings .timelinehead:empty{display:none}@media(min-width:761px){.forecast-settings>summary{display:none}}@media(max-width:760px){.forecast-settings{margin-top:6px}.forecast-settings>summary{min-height:40px}.topline h1{font-size:22px}.modebanner{margin-bottom:10px}.map-panel{height:390px}.sourcehead button{min-height:44px}.horizon button{font-size:12px}}
+
+@media(min-width:761px){.forecast-settings:not([open])>summary{display:list-item}}
