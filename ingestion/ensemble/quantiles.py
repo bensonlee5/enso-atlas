@@ -9,3 +9,14 @@ def member_quantiles(means):
     values = np.quantile(means, QUANTILE_LEVELS, axis=0, method='linear')
     assert (np.diff(values, axis=0) >= 0).all()
     return {key: row.round(3).tolist() for key, row in zip(QUANTILE_KEYS, values)}
+
+def align_valid_window(values, source_init, reference_init, sample_count=240):
+    """Crop older six-hourly series to the same valid instants, never same lead labels."""
+    seconds=(reference_init-source_init).total_seconds()
+    if seconds<0 or seconds%21600:
+        raise ValueError('Initializations must align on nonnegative six-hour boundaries')
+    offset=int(seconds//21600)
+    values=np.asarray(values,dtype=float)
+    if values.ndim!=2 or len(values)<offset+sample_count or not np.isfinite(values).all():
+        raise ValueError('Incomplete or nonfinite aligned member window')
+    return values[offset:offset+sample_count]

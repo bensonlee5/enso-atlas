@@ -6,6 +6,6 @@ vm.runInContext("globalMode=true;renderGlobal()",sandbox);assert.match(node('com
 node('globalVariable').value='precipitationMmDay';vm.runInContext('renderGlobal()',sandbox);assert.match(node('comparisonNote').textContent,/withheld/);
 node('globalDate').value='2026-05-01';vm.runInContext('renderGlobal()',sandbox);assert.equal(node('legendTitle').textContent,'No field displayed');assert.equal(node('globalSourceLink').hidden,true);assert.equal(node('globalUnit').textContent,'');
 const r=tool.execute({city:'San Francisco',variable:'cloud_cover',day:2});assert.equal(vm.runInContext('globalMode',sandbox),false);assert.equal(node('globalPanel').hidden,true);assert.equal(r.variable,'cloud_cover');assert.match(node('.colorbar').style.background,/linear-gradient/);
-vm.runInContext("setHorizon('long')",sandbox);assert.equal(node('.colorbar').style.background,'');assert.equal(node('percentile').disabled,false);assert.match(node('percentile').title,/four real/);
+vm.runInContext("setHorizon('long')",sandbox);assert.equal(node('.colorbar').style.background,'');assert.equal(node('percentile').disabled,false);assert.match(node('percentile').title,/real.*members/);
 console.log('PASS quality: matched-time temperatures, rainfall mismatch withheld, empty-state provenance cleared, WebMCP horizon reset, correct palette and ensemble affordance');
 }catch(e){console.error(e);process.exitCode=1}},250);

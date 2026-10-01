@@ -2,6 +2,10 @@ name: Refresh public NOAA forecasts
 on:
   schedule:
     - cron: '17 9 * * *'
+  # Validate ingestion changes with an immediate bounded refresh; data commits do not match.
+  push:
+    branches: [main]
+    paths: ['ingestion/**', '.github/workflows/refresh-weather.yml']
   workflow_dispatch:
 permissions:
   contents: read
@@ -30,6 +34,8 @@ jobs:
         run: python ingestion/verify_forecasts.py --archive-dir dist/data/archive --output dist/data/verification.json
       - name: Hash the final public data bundle
         run: python ingestion/refresh_bundle.py --manifest-only
+      - name: Verify browser acceptance and member quantiles
+        run: node tests/public-data-test.cjs
       - name: Commit only verified forecast data
         shell: bash
         run: |
@@ -46,4 +52,12 @@ jobs:
           assert all(p in expected or re.fullmatch(r'dist/data/archive/[0-9]{10}\.json',p) for p in changed), 'Refusing unexpected staged path'
           PY
           git -c user.name='github-actions[bot]' -c user.email='41898282+github-actions[bot]@users.noreply.github.com' commit -m 'Refresh validated NOAA forecast data'
-          git push origin HEAD:main
+          # Concurrent source edits can advance main; rebase only the generated-data commit.
+          # Conflicting data is never overwritten or force-pushed.
+          for attempt in 1 2 3; do
+            if git push origin HEAD:main; then exit 0; fi
+            git fetch origin main
+            git rebase origin/main || exit 1
+            sleep 2
+          done
+          exit 1

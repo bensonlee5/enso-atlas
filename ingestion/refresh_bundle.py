@@ -6,10 +6,13 @@ FILES=('cfs-weekly-raw-60days.json','cfs-weekly-anomalies.json','enso-observatio
 def manifest_for(folder):
  products={n:json.loads((folder/n).read_text()) for n in FILES}
  ens=products['ensemble-percentiles.json']
- assert ens['memberCount']==4 and ens['memberIDs']==['01','02','03','04']
+ assert ens['memberCount'] in (4,8,12,16) and len(set(ens['memberIDs']))==ens['memberCount']
+ assert all(frame['memberCount']==ens['memberCount'] for frame in ens['weeks']+[ens['remainingDays57to60']])
  assert len(ens['weeks'])==8 and ens['remainingDays57to60']['sampleCountPerMember']==16
  for frame in ens['weeks']+[ens['remainingDays57to60']]:
   for field in ('temperature','precipitationRate'):
+   assert len(frame['memberMeans'][field])==ens['memberCount']
+   assert all(len(row)==len(ens['gridCoordinates']) and all(math.isfinite(v) for v in row) for row in frame['memberMeans'][field])
    arrays=[frame[field][p] for p in ('p1','p5','p10','p50','p90','p95','p99')]
    assert all(len(a)==len(ens['gridCoordinates']) and all(math.isfinite(v) for v in a) for a in arrays)
    assert all(all(a<=b for a,b in zip(row,row[1:])) for row in zip(*arrays))
@@ -22,7 +25,7 @@ def main():
  with tempfile.TemporaryDirectory(prefix='enso-noaa-') as tmp:
   stage=pathlib.Path(tmp)/'data';stage.mkdir()
   subprocess.run([sys.executable,str(ROOT/'ingestion/refresh.py'),'--output',str(stage)],check=True,timeout=900)
-  subprocess.run([sys.executable,str(ROOT/'ingestion/ensemble/retrieve_ensemble.py'),'--run','latest','--days','60','--cache-dir',str(pathlib.Path(tmp)/'cache'),'--output',str(stage/'ensemble-percentiles.json')],check=True,timeout=900)
+  subprocess.run([sys.executable,str(ROOT/'ingestion/ensemble/retrieve_ensemble.py'),'--run','latest','--lag-days','4','--days','60','--cache-dir',str(pathlib.Path(tmp)/'cache'),'--output',str(stage/'ensemble-percentiles.json')],check=True,timeout=900)
   ensemble=json.loads((stage/'ensemble-percentiles.json').read_text());run=dt.datetime.fromisoformat(ensemble['run']).strftime('%Y%m%d%H')
   cache=pathlib.Path(tmp)/'cache'
   subprocess.run([sys.executable,str(ROOT/'ingestion/global/refresh_global.py'),'--cache-dir',str(pathlib.Path(tmp)/'aifs-cache'),'--output',str(stage/'aifs-global-snapshots.json')],check=True,timeout=300)

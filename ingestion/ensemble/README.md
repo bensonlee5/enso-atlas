@@ -28,3 +28,36 @@ For a refresh, `--run latest` discovers a complete four-member 00Z suite from th
 The original September 29 00Z source members were retrieved again from NOAA, preserving the run and valid intervals. No tails were inferred from the older P10/P50/P90 summaries. All eight exact GRIB subsets total approximately112MB; this is CPU-only processing with no paid compute, new accounts or credentials. Public-data validation requires all seven finite ordered arrays, and rejects older three-array refreshes rather than silently removing supported tail selections. Existing immutable issuance archives are not rewritten; new archives retain every available quantile.
 
 Run `PYTHONPATH=ingestion/ensemble python -m unittest discover -s tests -p test_ensemble_quantiles.py -v` for independent type-7 numerical expectations, permutation/equal-member checks and invalid-input rejection. `node tests/public-data-test.cjs` verifies bundle hashes and rejects missing tails or inverted ordering.
+
+## 16-member lagged expansion (October 2026)
+
+The default retrieval now uses four complete consecutive 00Z initializations,
+with members 01–04 for each day (16 forecasts, not 16 independent outcomes).
+The newest complete 00Z suite supplies the reference run. Older members download
+through lead 60 + lag-days and discard the initial lag; every member then covers
+exactly the same 240 six-hour valid instants. Temporal averaging happens after
+this alignment, then seven empirical quantiles are computed from all 16 means.
+Member IDs include initialization and perturbation number. Initialization range,
+lag hours, first aligned GRIB record, and the unrounded member means are retained.
+Missing or malformed members fail the whole refresh; no silent member reduction.
+
+This is an application-defined lagged ensemble, not NOAA's published CPC ensemble
+product. NOAA's seven-day rotating archive makes four days a bounded choice;
+06/12/18Z perturbed runs are excluded because their shorter horizons cannot cover
+all 60 days. See [NOAA CFSv2 documentation](https://cfs.ncep.noaa.gov/cfsv2/docs.html)
+and [archive information](https://cfs.ncep.noaa.gov/cfsv2/downloads.html).
+
+Members share a model, nearby initial conditions, and errors. Equal weights are
+used; larger membership does not calibrate event probabilities. P1/P99 remain
+interpolations near the sample extremes. This cannot substantiate 1% event odds,
+provide a calibrated confidence interval, or correct model bias.
+
+Expected full retrieval is about 450 MB across 32 paired temperature/rate GRIB
+subsets, using at most two CPU decoding processes. There is no paid API or GPU.
+The scheduled workflow keeps its existing daily 09:17 UTC target (GitHub may
+start late), also runs after ingestion changes, and remains manually dispatchable.
+It validates all products before one data-only Git commit. Failed downloads,
+science checks, browser validation or merge conflicts never publish a partial
+bundle. The Site checks the public hash-verified feed on open and hourly while
+visible; it does not need a daily Site redeployment. Visible GFS daily forecasts
+also refresh hourly directly from their existing Open-Meteo source.
