@@ -15,7 +15,7 @@ def archive_product(product_path, archive_dir):
                 period={k:w[k] for k in ['intervalStart','intervalEndExclusive','firstSampleHour','lastSampleHour','sampleCountPerMember']}
                 period['leadWeek']=w['week']
                 for field in ('temperature','precipitationRate'):
-                    period[field]={q:w[field][q][i] for q in ('p10','p50','p90')}
+                    period[field]={q:w[field][q][i] for q in ('p1','p5','p10','p50','p90','p95','p99') if q in w[field]}
                 periods.append(period)
             locations.append({**loc,'periods':periods})
         record={'schemaVersion':1,'archivedAt':dt.datetime.now(dt.timezone.utc).isoformat(),'run':p['run'],'sourceProductSha256':hashlib.sha256(data).hexdigest(),'memberCount':p['memberCount'],'model':p['model'],'sources':p['sources'],'units':p['units'],'method':p['method'],'locations':locations}

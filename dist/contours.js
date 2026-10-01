@@ -20,5 +20,28 @@ function contourSegments(coords,values,levels){
   for(const pair of pairs){const a=cross(pair[0]),b=cross(pair[1]);if([...a,...b].every(Number.isFinite)&&Math.hypot(a[0]-b[0],a[1]-b[1])>1e-9)out.push({level,a,b})}
  }}return out;
 }
-root.contourSegments=contourSegments;if(typeof module!=='undefined')module.exports={contourSegments};
+// Bilinear interpolation is presentation-only; gaps, regional edges and polar caps stay empty.
+function sampledGrid(coords,values){
+ const ys=[...new Set(coords.map(c=>c[0]))].sort((a,b)=>a-b),xs=[...new Set(coords.map(c=>c[1]))].sort((a,b)=>a-b);
+ const gap=a=>{const g=a.slice(1).map((v,i)=>v-a[i]).sort((a,b)=>a-b);return g[Math.floor(g.length/2)]||0};
+ const dx=gap(xs),dy=gap(ys),wrap=xs.length>3&&Math.abs(xs.at(-1)-xs[0]+dx-360)<dx*.2;
+ const xi=new Map(xs.map((x,i)=>[x,i])),yi=new Map(ys.map((y,i)=>[y,i]));
+ const g=Array.from({length:ys.length},()=>Array(xs.length).fill(null));coords.forEach((c,i)=>{g[yi.get(c[0])][xi.get(c[1])]=values[i]});
+ if(wrap){xs.push(xs[0]+360);g.forEach(r=>r.push(r[0]))}
+ function bracket(a,x){let l=0,h=a.length-1;if(x<a[0]||x>a[h])return -1;while(h-l>1){const m=(l+h)>>1;if(a[m]<=x)l=m;else h=m}return l}
+ function sample(lon,lat){if(wrap)lon=((lon-xs[0])%360+360)%360+xs[0];const i=bracket(xs,lon),j=bracket(ys,lat);if(i<0||j<0||xs[i+1]-xs[i]>dx*1.8||ys[j+1]-ys[j]>dy*1.8)return null;const v=[g[j][i],g[j][i+1],g[j+1][i],g[j+1][i+1]];if(!v.every(Number.isFinite))return null;const x=(lon-xs[i])/(xs[i+1]-xs[i]),y=(lat-ys[j])/(ys[j+1]-ys[j]);return (1-y)*(v[0]*(1-x)+v[1]*x)+y*(v[2]*(1-x)+v[3]*x)}
+ return {xs,ys,g,dx,dy,wrap,sample};
+}
+function smoothContourSegments(coords,values,levels){
+ const grid=sampledGrid(coords,values),cc=[],vv=[],steps=3;
+ // Subdivide the same bilinear field rather than smoothing across missing cells.
+ for(let j=0;j<grid.ys.length-1;j++)for(let sy=0;sy<steps;sy++){
+  const y=grid.ys[j]+(grid.ys[j+1]-grid.ys[j])*sy/steps;
+  for(let i=0;i<grid.xs.length-1;i++)for(let sx=0;sx<steps;sx++){const x=grid.xs[i]+(grid.xs[i+1]-grid.xs[i])*sx/steps;cc.push([y,x]);vv.push(grid.sample(x,y))}
+  cc.push([y,grid.xs.at(-1)]);vv.push(grid.sample(grid.xs.at(-1),y));
+ }
+ const y=grid.ys.at(-1);for(let i=0;i<grid.xs.length-1;i++)for(let sx=0;sx<steps;sx++){const x=grid.xs[i]+(grid.xs[i+1]-grid.xs[i])*sx/steps;cc.push([y,x]);vv.push(grid.sample(x,y))}cc.push([y,grid.xs.at(-1)]);vv.push(grid.sample(grid.xs.at(-1),y));
+ return contourSegments(cc,vv,levels);
+}
+root.sampledGrid=sampledGrid;root.smoothContourSegments=smoothContourSegments;root.contourSegments=contourSegments;if(typeof module!=='undefined')module.exports={contourSegments,sampledGrid,smoothContourSegments};
 })(typeof globalThis!=='undefined'?globalThis:this);

@@ -1,40 +1,40 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-10-01T16:28:51.007086+00:00",
+  "generatedAt": "2026-10-01T22:02:48.121692+00:00",
   "files": {
     "cfs-weekly-raw-60days.json": {
-      "sha256": "84b323b66d8368a34443d00283996f96d27a5dea4dce8aa1d359d23a07705716",
-      "bytes": 53039
+      "sha256": "21d163fba92837fb982b167e1c979ab74b9c9b82b80d98f7dce0853f6f39d8dc",
+      "bytes": 53169
     },
     "cfs-weekly-anomalies.json": {
-      "sha256": "ba995cd6a10c1bd8f1f3deef6a853d996fdef854d789b9a5712a9325b63ec571",
-      "bytes": 18045
+      "sha256": "ef28e518a503ab7aa1d411dc14e23d7d48d3a3232119194a097add2acad1c98a",
+      "bytes": 17973
     },
     "enso-observations.json": {
       "sha256": "f9b16b89bb92bc57aa331a7195970eeb8b170a57efc5a1ac377bbf993b9717cf",
       "bytes": 17462
     },
     "ensemble-percentiles.json": {
-      "sha256": "67affdf42a336da6af61be71060f461536f2ea1085646e3b256c07e3a564d9de",
-      "bytes": 167547
+      "sha256": "9753fd882530faf52058e78f63fc9240c7f21880bcac2576712686407651fa89",
+      "bytes": 917682
     },
     "cfs-global-60days.json": {
-      "sha256": "1d8bdae367dcd78d267dc2629c33f944fbacc4d46436d2d75987cb7498267f25",
-      "bytes": 2765968
+      "sha256": "b52b282fd87e8ad5d16322ee060efb4fb0f5131935b04843516020a62cbf1b0d",
+      "bytes": 2763069
     },
     "aifs-global-snapshots.json": {
-      "sha256": "387337ff28bd3e9ec4050d093f99653653f5647d665497b5d8f0c2ab48f813b2",
-      "bytes": 242080
+      "sha256": "aab0e23a70f5d6c64195676b077613087eddd845d47b7a31a6e02cb9982cee5a",
+      "bytes": 242140
     },
     "verification.json": {
-      "sha256": "999a4043e4d5a24e073c7b3167009b350d997e401cce7b51475664563be79f8b",
-      "bytes": 21154
+      "sha256": "34e28803c3eae1809be429c1d1ede23933e9b19c41725da8f235ce6640f15fbd",
+      "bytes": 20503
     }
   },
   "initializations": {
-    "raw": "2026-10-01T00:00:00Z",
-    "anomaly": "2026-09-30",
-    "ensemble": "2026-10-01T00:00:00+00:00",
+    "raw": "2026-09-29T12:00:00Z",
+    "anomaly": "2026-09-28",
+    "ensemble": "2026-09-29T00:00:00+00:00",
     "ensoObservation": "2026-09-23"
   },
   "source": "Public NOAA products; see each product for exact sources and statistical meaning"

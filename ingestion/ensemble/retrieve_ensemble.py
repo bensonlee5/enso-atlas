@@ -8,6 +8,7 @@ if os.environ.get('ECCODES_PYTHON_PATH'):
  sys.path.insert(0,os.environ['ECCODES_PYTHON_PATH'])
 import eccodes as e
 import numpy as np
+from quantiles import member_quantiles, QUANTILE_KEYS, QUANTILE_LEVELS
 ROOT=pathlib.Path(__file__).parent
 P=argparse.ArgumentParser();P.add_argument('--run',default='latest');P.add_argument('--days',type=int,default=60);P.add_argument('--cache-dir',type=pathlib.Path,default=pathlib.Path(tempfile.gettempdir())/'enso-atlas-cfs-cache');P.add_argument('--output',type=pathlib.Path,default=ROOT/'cfs-weekly-ensemble-percentiles.json');P.add_argument('--workers',type=int,default=2);A=P.parse_args()
 CACHE=A.cache_dir;CACHE.mkdir(parents=True,exist_ok=True)
@@ -85,13 +86,14 @@ if __name__=='__main__':
  with concurrent.futures.ProcessPoolExecutor(max_workers=max(1,min(2,A.workers))) as pool:results=list(pool.map(fetch_decode,pairs))
  coords=results[0][3];assert len(coords)==434 and all(r[3]==coords for r in results)
  data={(m,v):a for m,v,a,c,p in results};members=['01','02','03','04']
- out={'model':'NOAA CFSv2','run':INIT.isoformat(),'memberIDs':members,'memberCount':4,'initializationRange':[INIT.isoformat(),INIT.isoformat()],'laggedEnsemble':False,'kind':'Sparse 4-member empirical model quantiles; uncalibrated, not event probabilities or certainty bounds','quantileMethod':'NumPy linear quantiles (Hyndman–Fan type7), q=[0.1,0.5,0.9], applied across four member temporal averages. Equal member weights. P50 is the average of the two central sorted members.','method':'Each member is averaged over 28 instantaneous six-hourly forecast samples per week, THEN quantiles are computed across members. Precipitation is mean sampled instantaneous rate converted to mm/day; not a validated weekly accumulated amount. Same initialized00Z suite members01–04; shared-model members are dependent. No bias correction or climatological calibration.','limitations':['Four-member tails are unstable and do not describe a calibrated10% or90% chance','Weekly averages based on6-hourly samples, not continuous temporal integration','Coarse native-model points sampled every~2degrees; no spatial interpolation and not exact city forecasts','CONUS bounding rectangle includes adjacent ocean and neighboring countries; client may mask geography','Weeks1–8 cover56days; final4days are separately supplied, not a full ninth week'],'units':{'temperature':'°C','precipitationRate':'mm/day'},'gridCoordinates':coords,'sources':[p['source'] for *_,p in results],'provenance':[p for *_,p in results],'weeks':[]}
+ out={'schemaVersion':2,'availableQuantiles':list(QUANTILE_KEYS),'quantileLevels':list(QUANTILE_LEVELS),'model':'NOAA CFSv2','run':INIT.isoformat(),'memberIDs':members,'memberCount':4,'initializationRange':[INIT.isoformat(),INIT.isoformat()],'laggedEnsemble':False,'kind':'Sparse 4-member empirical model quantiles; uncalibrated, not event probabilities or certainty bounds','quantileMethod':'NumPy linear quantiles (Hyndman–Fan type7), q=[0.01,0.05,0.1,0.5,0.9,0.95,0.99], applied across four member temporal averages. Equal member weights. P50 is the average of the two central sorted members.','method':'Each member is averaged over 28 instantaneous six-hourly forecast samples per week, THEN quantiles are computed across members. Precipitation is mean sampled instantaneous rate converted to mm/day; not a validated weekly accumulated amount. Same initialized00Z suite members01–04; shared-model members are dependent. No bias correction or climatological calibration.','limitations':['Four dependent members cannot resolve rare-event probabilities. P1/P5/P95/P99 are interpolations between the same four member values, not calibrated tail probabilities or certainty bounds','Weekly averages based on6-hourly samples, not continuous temporal integration','Coarse native-model points sampled every~2degrees; no spatial interpolation and not exact city forecasts','CONUS bounding rectangle includes adjacent ocean and neighboring countries; client may mask geography','Weeks1–8 cover56days; final4days are separately supplied, not a full ninth week'],'units':{'temperature':'°C','precipitationRate':'mm/day'},'gridCoordinates':coords,'sources':[p['source'] for *_,p in results],'provenance':[p for *_,p in results],'weeks':[]}
  def interval(a,b,w):
   o={'week':w,'intervalStart':(INIT+dt.timedelta(hours=a*6)).isoformat(),'intervalEndExclusive':(INIT+dt.timedelta(hours=b*6)).isoformat(),'firstSampleHour':(a+1)*6,'lastSampleHour':b*6,'sampleCountPerMember':b-a,'memberCount':4}
   for var,key in [('tmp2m','temperature'),('prate','precipitationRate')]:
-   means=np.array([data[m,var][a:b].mean(axis=0) for m in members]);q=np.quantile(means,[.1,.5,.9],axis=0,method='linear')
-   assert (q[0]<=q[1]).all() and (q[1]<=q[2]).all()
-   o[key]={name:arr.round(3).tolist() for name,arr in zip(['p10','p50','p90'],q)}
+   means=np.array([data[m,var][a:b].mean(axis=0) for m in members])
+   o[key]=member_quantiles(means)
+   # Retain lossless member temporal means so future quantiles are reproducible.
+   o.setdefault('memberMeans',{})[key]=means.tolist()
   return o
  for w in range(1,9):out['weeks'].append(interval((w-1)*28,w*28,w))
  if N>224:out['remainingDays57to60']=interval(224,N,9)

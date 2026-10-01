@@ -1,5 +1,5 @@
 """Generate validated public NOAA data and a hash manifest. Does not push or deploy."""
-import argparse, datetime as dt, hashlib, json, os, pathlib, subprocess, sys, tempfile
+import argparse, datetime as dt, hashlib, json, os, pathlib, subprocess, sys, tempfile, math
 from archive_forecasts import archive_product
 ROOT=pathlib.Path(__file__).resolve().parents[1]
 FILES=('cfs-weekly-raw-60days.json','cfs-weekly-anomalies.json','enso-observations.json','ensemble-percentiles.json','cfs-global-60days.json','aifs-global-snapshots.json')
@@ -10,9 +10,9 @@ def manifest_for(folder):
  assert len(ens['weeks'])==8 and ens['remainingDays57to60']['sampleCountPerMember']==16
  for frame in ens['weeks']+[ens['remainingDays57to60']]:
   for field in ('temperature','precipitationRate'):
-   lo,mid,hi=[frame[field][p] for p in ('p10','p50','p90')]
-   assert len(lo)==len(ens['gridCoordinates'])==len(mid)==len(hi)
-   assert all(a<=b<=c for a,b,c in zip(lo,mid,hi))
+   arrays=[frame[field][p] for p in ('p1','p5','p10','p50','p90','p95','p99')]
+   assert all(len(a)==len(ens['gridCoordinates']) and all(math.isfinite(v) for v in a) for a in arrays)
+   assert all(all(a<=b for a,b in zip(row,row[1:])) for row in zip(*arrays))
  files={name:{'sha256':hashlib.sha256((folder/name).read_bytes()).hexdigest(),'bytes':(folder/name).stat().st_size} for name in (*FILES,*(['verification.json'] if (folder/'verification.json').exists() else []))}
  return {'schemaVersion':1,'generatedAt':dt.datetime.now(dt.timezone.utc).isoformat(),'files':files,'initializations':{'raw':products[FILES[0]]['run'],'anomaly':products[FILES[1]]['initialDate'],'ensemble':ens['run'],'ensoObservation':products[FILES[2]]['observations'][-1]['date']},'source':'Public NOAA products; see each product for exact sources and statistical meaning'}
 def main():

@@ -6,12 +6,10 @@
  const rendererStatus=document.createElement('span');rendererStatus.id='rendererStatus';rendererStatus.textContent='GPU globe';panel.appendChild(rendererStatus);
  const fallback=()=>{gpuGlobe=null;gpuCanvas.hidden=true;rendererStatus.textContent='Compatibility globe';draw()};
  try{gpuGlobe=new AtlasGlobe(gpuCanvas,fallback);gpuGlobe.setSurface('earth-surface.jpg')}catch(error){console.warn("ENSO WebGL fallback:",error.message);rendererStatus.title=error.message;fallback()}
- const timeline=document.querySelector('.timeline');workspace.after(timeline);
+ const timeline=document.querySelector('.timeline');workspace.before(timeline);
  const daylight=document.querySelector('.sunpanel');const details=document.createElement('details');details.className='daylight-details';const summary=document.createElement('summary');summary.textContent='Sunlight · independent date & time';details.appendChild(summary);details.appendChild(daylight);timeline.after(details);
- const citybar=$('cityBar');panel.appendChild(citybar);
- const top=document.querySelector('.topline');top.querySelector('h1').textContent='Explore Earth';
- const readingButton=document.createElement('button');readingButton.id='toggleReading';readingButton.textContent='Location details';readingButton.setAttribute('aria-expanded','false');panel.appendChild(readingButton);
- readingButton.onclick=()=>{const open=workspace.classList.toggle('reading-open');readingButton.setAttribute('aria-expanded',String(open));readingButton.textContent=open?'Close details':'Location details'};
+ const citybar=$('cityBar');timeline.before(citybar);
+ const top=document.querySelector('.topline');top.querySelector('h1').textContent='Forecast operations';
  const baseNote=document.createElement('span');baseNote.className='basemap-note';baseNote.textContent=gpuGlobe?'NASA surface · Oct 2004 · not live imagery':'Natural Earth coastline · compatibility view';panel.appendChild(baseNote);
  let travel=0;const reduced=()=>matchMedia('(prefers-reduced-motion: reduce)').matches;
  function flyTo(targetLon,targetLat,targetZoom=zoomScale){const token=++travel,startLon=lon,startLat=lat,startZoom=zoomScale,delta=((targetLon-startLon+540)%360)-180,start=performance.now();if(reduced()){lon=targetLon;lat=targetLat;setZoom(targetZoom);return}function frame(now){if(token!==travel)return;const t=Math.min(1,(now-start)/850),ease=t*t*(3-2*t);lon=startLon+delta*ease;lat=startLat+(targetLat-startLat)*ease;zoomScale=startZoom+(targetZoom-startZoom)*ease;resize();$('zoomLevel').textContent=Math.round(zoomScale*100)+'%';if(t<1)requestAnimationFrame(frame)}requestAnimationFrame(frame)}
@@ -23,5 +21,6 @@
  document.addEventListener('visibilitychange',()=>{if(document.hidden){travel++;rotating=false;sunPlaying=false;$('rotate').textContent='◎ Rotate globe';$('rotate').setAttribute('aria-pressed','false');$('playSun').textContent='Play';$('playSun').setAttribute('aria-pressed','false')}});
  // Coarse source grids retain sampled points; contours never imply new resolution.
  const originalDrawGlobal=drawGlobal;drawGlobal=function(){ctx.save();ctx.globalAlpha=mapStyle==='both'?.72:1;originalDrawGlobal();ctx.restore()};
+ resize=function(){const b=canvas.getBoundingClientRect(),d=Math.min(1.5,devicePixelRatio||1);W=b.width;H=b.height;canvas.width=W*d;canvas.height=H*d;ctx.setTransform(d,0,0,d,0,0);R=Math.min(W*.43,H*.41)*zoomScale;CX=W*.5;CY=H*.51;draw()};
  resize();
 })();

@@ -2,7 +2,7 @@ const fs=require('fs'),vm=require('vm'),assert=require('assert');const root=requ
 node('globalModel').value='cfs';node('globalVariable').value='temperatureC';node('globalView').value='auto';node('globalDate').value='2026-09-30';
 vm.runInContext(fs.readFileSync(root+'/global-weather.js','utf8'),sandbox);
 setTimeout(async()=>{try{
-vm.runInContext('globalMode=true;renderGlobal()',sandbox);assert.match(node('globalKind').textContent,/CFS/);assert(Number.isFinite(Number(node('globalPrimary').textContent)));const c=Number(node('globalPrimary').textContent);vm.runInContext('setUnits(true)',sandbox);assert(Math.abs(Number(node('globalPrimary').textContent)-(c*1.8+32))<.15);
+vm.runInContext('globalMode=true;setUnits(false);renderGlobal()',sandbox);assert.match(node('globalKind').textContent,/CFS/);assert(Number.isFinite(Number(node('globalPrimary').textContent)));const c=Number(node('globalPrimary').textContent);vm.runInContext('setUnits(true)',sandbox);assert(Math.abs(Number(node('globalPrimary').textContent)-(c*1.8+32))<.15);
 node('globalModel').value='aifs';node('globalDate').value='2026-10-01';vm.runInContext('renderGlobal()',sandbox);assert.match(node('globalCaveat').textContent,/nearest available snapshot/);node('globalVariable').value='precipitationMmDay';vm.runInContext('renderGlobal()',sandbox);assert.equal(node('globalUnit').textContent,'mm total');
 node('globalDate').value='2030-01-01';vm.runInContext('renderGlobal()',sandbox);assert.equal(node('globalKind').textContent,'CLIMATE AVERAGE');assert.match(node('globalCaveat').textContent,/not weather predicted/);
 node('globalDate').value='2026-05-01';vm.runInContext('renderGlobal()',sandbox);assert.match(node('globalStatus').textContent,/No archived/);
