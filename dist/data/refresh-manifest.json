@@ -1,13 +1,13 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-10-01T22:20:19.244086+00:00",
+  "generatedAt": "2026-10-01T22:26:49.666206+00:00",
   "files": {
     "cfs-weekly-raw-60days.json": {
-      "sha256": "84b323b66d8368a34443d00283996f96d27a5dea4dce8aa1d359d23a07705716",
-      "bytes": 53039
+      "sha256": "88adfc12acaa9f4e8c0cb18eb8275736e24818fa0fa41babb9e3a00789b199a9",
+      "bytes": 52870
     },
     "cfs-weekly-anomalies.json": {
-      "sha256": "ba995cd6a10c1bd8f1f3deef6a853d996fdef854d789b9a5712a9325b63ec571",
+      "sha256": "d8c25b64296b8fa41a6caa7e87c98bbf057a3c43fc6ce6488cf1df9b536d365a",
       "bytes": 18045
     },
     "enso-observations.json": {
@@ -15,24 +15,24 @@
       "bytes": 17462
     },
     "ensemble-percentiles.json": {
-      "sha256": "f381bda3538f1e4bbc2e2e92c9d1bac0a51a445af023eee0783e954e64f75660",
-      "bytes": 2603596
+      "sha256": "8c59e64019f0a927568ee97d12d73c32d157feff706c39c35bb834dee3795e2d",
+      "bytes": 2603595
     },
     "cfs-global-60days.json": {
-      "sha256": "1d8bdae367dcd78d267dc2629c33f944fbacc4d46436d2d75987cb7498267f25",
-      "bytes": 2765968
+      "sha256": "c8db598413d34b5e2fdc49cc422c82662ffa5afcf21a1b54e0f7eb06a48c19ab",
+      "bytes": 2766018
     },
     "aifs-global-snapshots.json": {
-      "sha256": "387337ff28bd3e9ec4050d093f99653653f5647d665497b5d8f0c2ab48f813b2",
-      "bytes": 242080
+      "sha256": "4cb0e827d9edf31932cdbad9ca90f1b4db278a2de16a0457fb80de2111602e8a",
+      "bytes": 242310
     },
     "verification.json": {
-      "sha256": "999a4043e4d5a24e073c7b3167009b350d997e401cce7b51475664563be79f8b",
+      "sha256": "8d726038121477d42fc40434e9e52ed12ad738dca7b1412dd4e86013986efd0e",
       "bytes": 21154
     }
   },
   "initializations": {
-    "raw": "2026-10-01T00:00:00Z",
+    "raw": "2026-10-01T06:00:00Z",
     "anomaly": "2026-09-30",
     "ensemble": "2026-10-01T00:00:00+00:00",
     "ensoObservation": "2026-09-23"
