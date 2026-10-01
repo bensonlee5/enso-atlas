@@ -1,5 +1,5 @@
 # ENSO Atlas
-A source-honest weather exploration dashboard. A canvas globe plots actual city forecasts, not interpolated or illustrative weather fields. NOAA GFS daily temperature, precipitation and wind via Open-Meteo cover up to 16 days. Long-range guidance and experimental calibration are explicitly separated.
+A source-honest weather exploration dashboard. A GPU-shaded globe plots actual city forecasts, not interpolated or illustrative weather fields. NOAA GFS daily temperature, precipitation and wind via Open-Meteo cover up to 16 days. Long-range guidance and experimental calibration are explicitly separated.
 
 ## Run
 `python -m http.server 8080 --directory dist`
@@ -84,3 +84,12 @@ A temperature comparison uses actual instantaneous CFS member01 samples at the e
 The city picker includes Palo Alto (37.4419, -122.143), with its own GFS request and the returned model coordinate disclosed. The standalone 13-city `forecast.json` fallback is not part of the daily seven-product NOAA/GitHub bundle; GFS refreshes on page open and on demand.
 
 The visible Daylight card controls an independent astronomical instant. Choose a date, time and UTC or Pacific time; changing timezone preserves the instant. Now resets to the current instant, Play advances in 15-minute steps across midnight, and Use forecast date selects noon UTC on the daily date or long-range midpoint. Weather validity does not change. Nonexistent and ambiguous Pacific DST times require a different time or explicit UTC. Solar declination and equation of time use the approximate NOAA equations at https://gml.noaa.gov/grad/solcalc/solareqns.PDF for visualization.
+
+## GPU rendering pass (October 2026)
+The planet uses a dependency-free WebGL fragment renderer with a smooth astronomical terminator, ocean reflectance and a thin atmospheric limb. Geographic labels and actual sampled weather points/isolines remain an independent Canvas2D scientific overlay. No weather interpolation, model fields, or source timestamps are changed by the surface renderer. WebGL failure/context loss falls back to the existing compatibility globe. Camera selection uses short great-longitude-path easing; reduced-motion preferences skip that animation. Rendering is on demand, pixel ratio is capped at 1.5, and animations stop when the document is hidden.
+
+Basemap: NASA Earth Observatory, Blue Marble Next Generation, October **2004** cloud-free composite (2048×1024 derivative). This is historical reference surface imagery, **not current satellite weather**, cloud observations, or a forecast. Terrain appearance comes from the source composite; the renderer adds no elevation forecast or synthetic clouds. Source: https://science.nasa.gov/earth/earth-observatory/blue-marble-next-generation/base-map/ ; original https://assets.science.nasa.gov/content/dam/science/esd/eo/images/bmng/bmng-base/october/world.200410.3x5400x2700.jpg .
+
+The forecast timeline sits below the globe. On small screens, Location details opens the current point's full readout; independent sunlight date/time controls are collapsible. All model/historical/climatology labels and uncertainty caveats remain.
+
+Renderer QA: `node tests/globe-renderer-test.cjs` checks setup/fallback/projection. Optional `python tests/gpu-egl-validation.py` compiles and links the exact production GLSL ES shaders in an independent Mesa EGL context, renders the actual NASA asset offscreen, and saves `/tmp/enso-gpu-shader-validation.png`. It requires system EGL/Mesa and Pillow. Its software-render microbenchmark is not browser/device frame rate.
