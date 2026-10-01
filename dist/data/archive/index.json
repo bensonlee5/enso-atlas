@@ -12,6 +12,12 @@
       "path": "2026093000.json",
       "sha256": "fa6da4b895b2f6df119bc97de92b7400a450ecc8351c4efcfd57257f1ab1826d",
       "archivedAt": "2026-09-30T15:57:03.142376+00:00"
+    },
+    {
+      "run": "2026-10-01T00:00:00+00:00",
+      "path": "2026100100.json",
+      "sha256": "86178340e129c96711ee6d30ddfd636cdd5448c44b5ebdfc790dbb7469cfbb8a",
+      "archivedAt": "2026-10-01T16:28:50.674863+00:00"
     }
   ],
   "retention": "Latest 400 issuances indexed; older immutable files remain available in repository history and archive directory."
