@@ -29,7 +29,7 @@
  const sourceDetails=document.createElement('details');sourceDetails.className='source-context-details';sourceDetails.innerHTML='<summary>Source, freshness & interpretation</summary>';workspace.after(sourceDetails);sourceDetails.append($('operatingStrip'));
  // Essential failures remain visible even when source detail is collapsed.
  const attention=document.createElement('p');attention.id='forecastAttention';attention.setAttribute('role','status');attention.hidden=true;document.querySelector('.timeline').after(attention);
- const updateAttention=()=>{if(typeof document==='undefined'||!document)return;fineShortcut.disabled=!globalAssets.aifs?.fineDecoded;fineShortcut.hidden=!!(globalMode&&globalField?.fine);const notes=[...$('operatingStrip').querySelectorAll('.attention')].map(n=>n.textContent);attention.hidden=!notes.length;attention.textContent=notes.join(' · ')};
+ const updateAttention=()=>{if(typeof document==='undefined'||!document)return;fineShortcut.disabled=!globalAssets.aifs?.fineDecoded;fineShortcut.hidden=!!(globalMode&&globalField?.fine);const notes=[...$('operatingStrip').querySelectorAll('.attention')].map(n=>[...n.children].map(x=>x.textContent).join(': '));attention.hidden=!notes.length;attention.textContent=notes.join(' · ')};
  new MutationObserver(updateAttention).observe($('operatingStrip'),{childList:true,subtree:true,characterData:true});updateAttention();
  // Never place a previous location's numeric column beside a new city's inputs.
  const airContext=$('airSharedContext'),airGrid=document.querySelector('.airgrid'),airLoad=document.createElement('button');airLoad.type='button';airLoad.id='loadSelectedAir';airLoad.textContent='Load this city';airContext.after(airLoad);
