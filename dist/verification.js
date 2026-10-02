@@ -1,5 +1,10 @@
 'use strict';
-let verificationReport=null,verificationArchive=null;
+let verificationReport=null,verificationArchive=null,verificationArchiveRequest=0;
+async function loadVerificationArchive(report){
+ const request=++verificationArchiveRequest,path=report.archiveProvenance?.at(-1)?.path;verificationArchive=null;
+ if(!/^[0-9]{8}00\.json$/.test(path||''))return;
+ try{const response=await fetch('data/archive/'+path,{cache:'no-cache'});if(!response.ok)return;const archive=await response.json();if(request!==verificationArchiveRequest||report!==verificationReport)return;if(archive?.schemaVersion!==1||!Array.isArray(archive.locations))return;verificationArchive=archive;renderVerification()}catch{}
+}
 function verificationShell(){
  const area=$('liveVerification');if($('verificationEmpty'))return;
  const empty=document.createElement('div');empty.id='verificationEmpty';empty.className='verification-empty';empty.setAttribute('role','status');$('verificationStatus').after(empty);
@@ -20,4 +25,4 @@ function renderVerification(){if(!verificationReport)return;verificationShell();
  if(!body.children.length){const p=document.createElement('p');p.textContent='Eligibility starts only after each complete valid interval plus the '+r.minimumLatencyDays+'-day application latency buffer. This is not a guarantee of NOAA data availability. Open the immutable archive for exact intervals.';body.append(p)}
 }
 $('verificationGrouping').onchange=renderVerification;
-fetch('data/verification.json').then(r=>{if(!r.ok)throw Error('Unavailable');return r.json()}).then(r=>{verificationReport=r;renderVerification();const path=r.archiveProvenance?.at(-1)?.path;if(path&&/^[a-zA-Z0-9_.-]+\.json$/.test(path))fetch('data/archive/'+path).then(r=>r.ok?r.json():null).then(a=>{verificationArchive=a;renderVerification()}).catch(()=>{})}).catch(()=>{$('verificationStatus').textContent='Observation comparison unavailable. No accuracy score is shown.'});
+fetch('data/verification.json').then(r=>{if(!r.ok)throw Error('Unavailable');return r.json()}).then(r=>{verificationReport=r;renderVerification();loadVerificationArchive(r)}).catch(()=>{$('verificationStatus').textContent='Observation comparison unavailable. No accuracy score is shown.'});
