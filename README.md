@@ -52,7 +52,7 @@ The worldwide ensemble combines members 01–04 from four consecutive 00Z initia
 - **Rainfall statistics differ.** CFS precipitation is a mean of sampled instantaneous rates in mm/day-equivalent. AIFS precipitation is accumulated since initialization. Neither is interchangeable with the GFS daily precipitation total. Cross-model rainfall comparison and CFS rainfall verification are withheld.
 - **Smooth maps do not add resolution.** Color fields and contours interpolate within genuine grid cells; missing cells, regional boundaries, and polar caps remain empty. Regional readouts use the nearest sampled point only inside that product's footprint. GFS city points are not interpolated into a global weather field.
 - **Model disagreement is not accuracy.** The CFS/AIFS temperature comparison uses matching valid instants, but initialization times and sampled coordinates differ. It is not a skill ranking.
-- **The Earth image and lighting are context.** NASA's October 2004 Blue Marble composite is historical surface imagery, not live satellite weather. Daylight is astronomical shading; the cloud layer uses GFS hourly city-point values, not a global cloud image.
+- **The Earth image and lighting are context.** NASA's October 2004 Blue Marble composite is background imagery, not live satellite weather or forecast data. Its archival date stays in the Background imagery attribution and footer. The prominently displayed forecast run comes from the selected model's loaded data, with its valid period shown separately; GFS uses a clearly labeled retrieval time because its API does not supply a model run time. Daylight is astronomical shading; the cloud layer uses GFS hourly city-point values, not a global cloud image.
 - **Research is separate from live guidance.** The [calibration pilot](research/pilot/README.md) is a deterministic, no-ENSO experiment for days 15–28 across six broad CONUS regions. Ridge slightly outperformed its small neural model on held-out RMSE. It does not establish local accuracy, weeks 5–8 skill, calibrated probabilities, or a trained ENSO-aware forecast backbone.
 
 This is an exploratory project. Do not use it for safety-critical weather or aviation decisions.
@@ -144,6 +144,7 @@ node tests/forecast-storage-test.mjs
 node tests/forecast-playback-test.cjs
 node tests/forecast-playback-dom-test.cjs
 node tests/forecast-playback-raster-test.cjs
+node tests/forecast-provenance-test.cjs
 ```
 
 These tests do not replace visual browser testing. The optional `python tests/gpu-egl-validation.py` requires EGL/Mesa and Pillow and validates the production shaders offscreen; it is not a browser/device frame-rate benchmark.
