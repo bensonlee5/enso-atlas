@@ -26,6 +26,7 @@
  for(const label of [...top.querySelectorAll('label')])if(!label.querySelector('#forecastPlaybackAxis'))optionsBody.append(label);
  top.append(playbackOptions);
  const method=playback.querySelector('details:not(.playback-options)');method.prepend($('forecastPlaybackNote'));
+ for(const [id,label] of [['globalPointForm','Coordinates & map point'],['modelComparison','Compare model snapshots']]){const element=$(id),details=document.createElement('details');details.className='secondary-forecast-detail';const summary=document.createElement('summary');summary.textContent=label;details.append(summary);element.before(details);details.append(element);}
  const sourceDetails=document.createElement('details');sourceDetails.className='source-context-details';sourceDetails.innerHTML='<summary>Source, freshness & interpretation</summary>';workspace.after(sourceDetails);sourceDetails.append($('operatingStrip'));
  // Essential failures remain visible even when source detail is collapsed.
  const attention=document.createElement('p');attention.id='forecastAttention';attention.setAttribute('role','status');attention.hidden=true;document.querySelector('.timeline').after(attention);
