@@ -13,6 +13,7 @@
  const baseNote=document.createElement('span');baseNote.className='basemap-note';baseNote.textContent=gpuGlobe?'NASA surface · Oct 2004 · not live imagery':'Natural Earth coastline · compatibility view';panel.appendChild(baseNote);
  let travel=0;const reduced=()=>matchMedia('(prefers-reduced-motion: reduce)').matches;
  function flyTo(targetLon,targetLat,targetZoom=zoomScale){const token=++travel,startLon=lon,startLat=lat,startZoom=zoomScale,delta=((targetLon-startLon+540)%360)-180,start=performance.now();if(reduced()){lon=targetLon;lat=targetLat;setZoom(targetZoom);return}function frame(now){if(token!==travel)return;const t=Math.min(1,(now-start)/850),ease=t*t*(3-2*t);lon=startLon+delta*ease;lat=startLat+(targetLat-startLat)*ease;zoomScale=startZoom+(targetZoom-startZoom)*ease;resize();$('zoomLevel').textContent=Math.round(zoomScale*100)+'%';if(t<1)requestAnimationFrame(frame)}requestAnimationFrame(frame)}
+ window.atlasFlyTo=flyTo;
  canvas.addEventListener('pointerdown',()=>{travel++});canvas.addEventListener('wheel',()=>{travel++},{passive:true});canvas.addEventListener('keydown',()=>{travel++});
  $('city').onchange=e=>{city=Number(e.target.value);render();flyTo(cities[city][2],Math.max(-75,Math.min(75,cities[city][1]-8)))};
  document.querySelectorAll('[data-focus]').forEach(b=>b.onclick=()=>{document.querySelectorAll('[data-focus]').forEach(x=>x.classList.toggle('active',x===b));const f=b.dataset.focus;flyTo(f==='global'?-160:f==='ca'?-120:-108,f==='global'?10:f==='ca'?32:29,f==='ca'?1.5:1)});
