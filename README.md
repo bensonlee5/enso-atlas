@@ -4,6 +4,24 @@
 
 A weather exploration dashboard that brings a city forecast, a global globe, and longer-range model guidance into one workspace. Compare temperature and precipitation across time horizons while keeping each product's source, initialization, valid period, and limitations visible.
 
+## Screenshots
+
+Live-app captures from October 2, 2026. Globe images show the Canvas2D compatibility view. Click an image to open it full size.
+
+| City forecast | Global temperature field |
+| --- | --- |
+| [![Boston selected on the globe beside its GFS daily forecast and 16-day temperature trajectory](docs/screenshots/boston-local-forecast.jpg)](docs/screenshots/boston-local-forecast.jpg) | [![CFSv2 global temperature field and contours with Boston selected and a same-time AIFS comparison](docs/screenshots/global-cfs-temperature.jpg)](docs/screenshots/global-cfs-temperature.jpg) |
+| Boston's gold location marker, daily high and low, rain, wind, and forecast trajectory. | CFSv2 member 01 sampled temperature field, labeled contours, and model context. |
+
+<details>
+<summary>Seven-day briefing</summary>
+
+[![Seven daily Boston forecast cards with highs, lows, rain totals, maximum wind, and a days 8–16 extension](docs/screenshots/seven-day-briefing.jpg)](docs/screenshots/seven-day-briefing.jpg)
+
+A day-by-day GFS briefing with UTC date windows and the longer-range extension kept separate.
+
+</details>
+
 ## Explore the atlas
 
 - **Your local outlook:** search a city or five-digit US ZIP code, choose a result, and get a seven-day GFS briefing with a separate days 8–16 extension. Temperature highs/lows, precipitation totals, and maximum wind also appear in a readable table.
