@@ -43,5 +43,67 @@ function smoothContourSegments(coords,values,levels,steps=3){
  const y=grid.ys.at(-1);for(let i=0;i<grid.xs.length-1;i++)for(let sx=0;sx<steps;sx++){const x=grid.xs[i]+(grid.xs[i+1]-grid.xs[i])*sx/steps;cc.push([y,x]);vv.push(grid.sample(x,y))}cc.push([y,grid.xs.at(-1)]);vv.push(grid.sample(grid.xs.at(-1),y));
  return contourSegments(cc,vv,levels);
 }
-root.sampledGrid=sampledGrid;root.smoothContourSegments=smoothContourSegments;root.contourSegments=contourSegments;if(typeof module!=='undefined')module.exports={contourSegments,sampledGrid,smoothContourSegments};
+// Reuse only coordinate topology; scalar values and every requested level remain current.
+const contourTopologyCache=new WeakMap();
+function contourTopology(coords){
+ let result=contourTopologyCache.get(coords);if(result)return result;
+ const grid=sampledGrid(coords,coords.map((_,i)=>i)),cells=[];
+ for(let y=0;y<grid.ys.length-1;y++)for(let x=0;x<grid.xs.length-1;x++){
+  const dx=grid.xs[x+1]-grid.xs[x],dy=grid.ys[y+1]-grid.ys[y];
+  if(dx>grid.dx*1.8||dy>grid.dy*1.8)continue;
+  const indices=[grid.g[y][x],grid.g[y][x+1],grid.g[y+1][x+1],grid.g[y+1][x]];
+  if(indices.every(Number.isInteger))cells.push({indices,x:grid.xs[x],y:grid.ys[y],dx,dy});
+ }
+ result={cells,wrap:grid.wrap};contourTopologyCache.set(coords,result);return result;
+}
+// Trace the bilinear isoline itself. Chords are accepted only within explicit scalar
+// and conservative orthographic-projection error bounds. No post-hoc curve fitting.
+function adaptiveContourSegments(coords,values,levels,options={}){
+ const sorted=[...new Set(levels.filter(Number.isFinite))].sort((a,b)=>a-b),buckets=sorted.map(()=>[]),topology=contourTopology(coords);
+ const radius=Math.max(1,options.radius||320),pixelTolerance=Math.max(.05,options.pixelTolerance||.3),gaps=sorted.slice(1).map((v,i)=>v-sorted[i]),scalarTolerance=Math.max(1e-8,options.scalarTolerance||Math.min(.02,(gaps.length?Math.min(...gaps):1)*.02));
+ const packed=options.packed===true,maxDepth=Math.min(32,Math.max(1,options.maxDepth||24)),maxSegments=Math.min(1000000,options.maxSegments||500000),maxWork=2000000,rad=Math.PI/180;const view=options.view&&Number.isFinite(options.view.longitude)&&Number.isFinite(options.view.latitude)?options.view:null;
+ const quality={scalarTolerance,pixelTolerance,radius,visited:0,segments:0,withheld:0,depthLimit:0,segmentLimit:0,workLimit:0,numericalFailure:0,maxDepth:0,levels:sorted.length};
+ const lower=(v)=>{let a=0,b=sorted.length;while(a<b){const m=(a+b)>>1;if(sorted[m]<v)a=m+1;else b=m}return a};
+ const cases={1:[[3,0]],2:[[0,1]],3:[[3,1]],4:[[1,2]],6:[[0,2]],7:[[3,2]],8:[[2,3]],9:[[2,0]],11:[[1,2]],12:[[1,3]],13:[[0,1]],14:[[3,0]]},edges=[[0,1],[1,2],[2,3],[3,0]],corners=[[0,0],[1,0],[1,1],[0,1]];
+ for(const cell of topology.cells){
+  if(view){const phi=(cell.y+cell.dy/2)*rad,center=view.latitude*rad,delta=(cell.x+cell.dx/2-view.longitude)*rad,dot=Math.sin(phi)*Math.sin(center)+Math.cos(phi)*Math.cos(center)*Math.cos(delta),margin=(Math.abs(cell.dx)+Math.abs(cell.dy))/2+(view.marginDegrees||0);if(margin<90&&dot< -Math.sin(margin*rad))continue;}
+  const v=cell.indices.map(i=>values[i]);if(!v.every(Number.isFinite))continue;
+  const min=Math.min(...v),max=Math.max(...v);if(min===max)continue;
+  for(let k=lower(min);k<sorted.length&&sorted[k]<=max;k++){
+   const level=sorted[k],a=v[0]-level,b=v[1]-v[0],c=v[3]-v[0],d=v[2]-v[1]-v[3]+v[0],q=a*d-b*c,scale=Math.max(1,...v.map(n=>Math.abs(n-level))),eps=Number.EPSILON*scale*scale*32;
+   const code=v.reduce((s,n,i)=>s+(n>=level?1<<i:0),0);
+   const crossing=edge=>{const [i,j]=edges[edge],t=(level-v[i])/(v[j]-v[i]);return [corners[i][0]+t*(corners[j][0]-corners[i][0]),corners[i][1]+t*(corners[j][1]-corners[i][1])]};
+   const emit=(p,z)=>{if(quality.segments>=maxSegments){quality.withheld++;quality.segmentLimit++;return}const aa=[cell.x+p[0]*cell.dx,cell.y+p[1]*cell.dy],bb=[cell.x+z[0]*cell.dx,cell.y+z[1]*cell.dy];if(Math.hypot(aa[0]-bb[0],aa[1]-bb[1])<1e-10)return;if(packed)buckets[k].push(level,aa[0],aa[1],bb[0],bb[1]);else buckets[k].push({level,a:aa,b:bb});quality.segments++;};
+   function refine(p,z,depth){
+    quality.visited++;quality.maxDepth=Math.max(quality.maxDepth,depth);if(quality.visited>maxWork||quality.segments>=maxSegments){quality.withheld++;if(quality.visited>maxWork)quality.workLimit++;else quality.segmentLimit++;return}
+    const du=z[0]-p[0],dv=z[1]-p[1],scalarError=Math.abs(d*du*dv)/4,angle=(Math.abs(du*cell.dx)+Math.abs(dv*cell.dy))*rad,projectionChord=radius*angle*angle/8;
+    let mid=[(p[0]+z[0])/2,(p[1]+z[1])/2],deviation=0;
+    // Exact straight branches need only projection refinement, including saddle arms.
+    if(scalarError>1e-13*scale){
+     const horizontal=Math.abs(du*cell.dx)>=Math.abs(dv*cell.dy),axis=horizontal?0:1,other=1-axis,coefficient=horizontal?b:c,denominator=horizontal?c:b,u0=p[axis],u1=z[axis],slope=(z[other]-p[other])/(u1-u0),solve=u=>-(a+coefficient*u)/(denominator+d*u),um=(u0+u1)/2;
+     mid=horizontal?[um,solve(um)]:[solve(um),um];
+     if(!mid.every(Number.isFinite)||mid.some(n=>n< -1e-8||n>1+1e-8)){quality.withheld++;quality.numericalFailure++;return}
+     const deviationAt=u=>Math.abs(solve(u)-(p[other]+slope*(u-u0))),candidates=[um];
+     if(d!==0&&q/slope>0){const root=Math.sqrt(q/slope);for(const den of [root,-root]){const u=(den-denominator)/d;if(u>Math.min(u0,u1)&&u<Math.max(u0,u1))candidates.push(u)}}
+     deviation=Math.max(...candidates.map(deviationAt))*(horizontal?cell.dy:cell.dx);
+    }
+    const projectionError=radius*rad*deviation+projectionChord;
+    if(scalarError<=scalarTolerance&&projectionError<=pixelTolerance){emit(p,z);return}
+    if(depth>=maxDepth){quality.withheld++;quality.depthLimit++;return}
+    refine(p,mid,depth+1);refine(mid,z,depth+1);
+   }
+   // Factored level sets can have boundary saddles or complete zero edges,
+   // not just the four-crossing marching-square cases. Trace their exact arms.
+   if(d!==0&&Math.abs(q/d)<=Number.EPSILON*scale*128){const x=-c/d,y=-b/d,insideX=x>=0&&x<=1,insideY=y>=0&&y<=1;if(insideX||insideY){if(insideX){if(insideY){refine([x,0],[x,y],0);refine([x,y],[x,1],0)}else refine([x,0],[x,1],0)}if(insideY){if(insideX){refine([0,y],[x,y],0);refine([x,y],[1,y],0)}else refine([0,y],[1,y],0)}continue}}
+   if(d===0&&b===0&&c!==0){const y=-a/c;if(y>=0&&y<=1)refine([0,y],[1,y],0);continue}
+   if(d===0&&c===0&&b!==0){const x=-a/b;if(x>=0&&x<=1)refine([x,0],[x,1],0);continue}
+   if(code===0||code===15)continue;
+   const pairs=code===5||code===10?(q>0?[[0,1],[2,3]]:[[3,0],[1,2]]):cases[code];
+   for(const pair of pairs)refine(crossing(pair[0]),crossing(pair[1]),0);
+  }
+ }
+ if(packed){const data=new Float64Array(quality.segments*5);let offset=0;for(const bucket of buckets){data.set(bucket,offset);offset+=bucket.length;}return {data,length:quality.segments,quality};}
+ const out=buckets.flat();Object.defineProperty(out,'quality',{value:quality});return out;
+}
+root.adaptiveContourSegments=adaptiveContourSegments;root.contourTopology=contourTopology;root.sampledGrid=sampledGrid;root.smoothContourSegments=smoothContourSegments;root.contourSegments=contourSegments;if(typeof module!=='undefined')module.exports={contourSegments,sampledGrid,smoothContourSegments,adaptiveContourSegments,contourTopology};
 })(typeof globalThis!=='undefined'?globalThis:this);

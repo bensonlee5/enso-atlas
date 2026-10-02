@@ -1,0 +1,24 @@
+'use strict';
+const assert=require('node:assert/strict'),fs=require('node:fs'),{performance}=require('node:perf_hooks');
+const {adaptiveContourSegments:A,sampledGrid,contourTopology}=require('../dist/contours.js');
+const coords=[[0,0],[0,4],[4,0],[4,4]],values=[0,0,0,1],grid=sampledGrid(coords,values),curved=A(coords,values,[.1,.3,.7],{radius:1000});
+assert(curved.length>12);assert.equal(curved.quality.withheld,0);assert.equal(contourTopology(coords),contourTopology(coords));
+function checkField(coords,values,segments){const g=sampledGrid(coords,values);let max=0;for(const s of segments){for(const p of [s.a,s.b])assert(Math.abs(g.sample(...p)-s.level)<1e-8,'Vertex lies on its actual level');for(const t of [.1,.25,.5,.75,.9]){const error=Math.abs(g.sample(s.a[0]*(1-t)+s.b[0]*t,s.a[1]*(1-t)+s.b[1]*t)-s.level);max=Math.max(max,error);assert(error<=segments.quality.scalarTolerance+1e-8,'Entire chord scalar residual is bounded');}}return max}
+checkField(coords,values,curved);
+function project(lon,lat,centerLon,centerLat,r){const f=Math.PI/180,L=(lon-centerLon)*f,P=lat*f,C=centerLat*f;return [r*Math.cos(P)*Math.sin(L),r*(Math.sin(P)*Math.cos(C)-Math.cos(P)*Math.cos(L)*Math.sin(C))]}
+function distance(p,a,b){const dx=b[0]-a[0],dy=b[1]-a[1],t=Math.max(0,Math.min(1,((p[0]-a[0])*dx+(p[1]-a[1])*dy)/(dx*dx+dy*dy)));return Math.hypot(p[0]-a[0]-t*dx,p[1]-a[1]-t*dy)}
+for(const [lon,lat] of [[2,2],[90,0],[180,60],[-90,-60]])for(const s of curved)for(const t of [.1,.25,.5,.75,.9]){const x=s.a[0]*(1-t)+s.b[0]*t,y=16*s.level/x;assert(distance(project(x,y,lon,lat,1000),project(...s.a,lon,lat,1000),project(...s.b,lon,lat,1000))<=.30001,'Conservative screen-space chord bound across camera/limb views')}
+const small=[[0,0],[0,1],[1,0],[1,1]];
+for(const v of [[9,-6,-5,3],[3,-5,-6,9],[1,-1,-1,1],[0,2,2,0]]){const s=A(small,v,[0],{radius:500});assert.equal(s.quality.withheld,0);checkField(small,v,s)}
+const boundary=A(small,[0,-.5,0,.5],[0],{radius:500});assert.equal(boundary.quality.withheld,0);checkField(small,[0,-.5,0,.5],boundary);assert(boundary.some(s=>[s.a,s.b].some(p=>p[0]===0&&p[1]===.5)),'Boundary saddle corner retained exactly');
+for(const v of [[0,-.5,0,.5],[0,.5,0,-.5],[-.5,0,.5,0],[0,0,-.5,.5],[.5,-.5,0,0]]){const s=A(small,v,[0],{radius:2000});assert.equal(s.quality.withheld,0);checkField(small,v,s)}
+const realBoundaryCoords=[[4.252,-116.2503],[4.252,-111.5628],[8.0315,-116.2503],[8.0315,-111.5628]],realBoundary=A(realBoundaryCoords,[28,27.65,28,28.04],[28],{radius:800});assert.equal(realBoundary.quality.withheld,0);checkField(realBoundaryCoords,[28,27.65,28,28.04],realBoundary);assert(realBoundary.some(s=>[s.a,s.b].some(p=>Math.abs(p[0]+116.2503)<1e-9&&Math.abs(p[1]-7.64385897436)<1e-8)));
+const tie=A(small,[1,-1,-1,1],[0],{radius:500});assert.equal(tie.filter(s=>[s.a,s.b].some(p=>p[0]===.5&&p[1]===.5)).length,4,'Exact saddle uses four level-preserving arms');
+assert.equal(A(small,[0,null,0,1],[.5]).length,0);assert.equal(A(small,[1,1,1,1],[1]).length,0);
+const masked=A([[0,0],[0,1],[0,9],[0,10],[1,0],[1,1],[1,9],[1,10]],[0,1,0,1,0,1,0,1],[.5]);assert(masked.every(s=>s.a[0]<2||s.a[0]>8));
+const wrapCoords=[],wrapValues=[];for(const y of [-80,0,80])for(const x of [-180,-90,0,90]){wrapCoords.push([y,x]);wrapValues.push(Math.sin(x*Math.PI/180)+y/80)}const wrapped=A(wrapCoords,wrapValues,[.3],{radius:300});assert(wrapped.some(s=>s.a[0]>90));assert(wrapped.every(s=>Math.abs(s.a[1])<=80&&Math.abs(s.b[1])<=80));checkField(wrapCoords,wrapValues,wrapped);
+const start=performance.now(),cfs=JSON.parse(fs.readFileSync('dist/data/cfs-global-60days.json')),ensemble=JSON.parse(fs.readFileSync('dist/data/ensemble-percentiles.json')),levels=Array.from({length:121},(_,i)=>i-65);let maximum=0,count=0;
+for(const [cc,v,ll] of [[cfs.gridCoordinates,cfs.days[0].temperatureC,levels],[cfs.gridCoordinates,cfs.days[30].temperatureC,levels],[ensemble.gridCoordinates,ensemble.weeks[0].temperature.p50,Array.from({length:106},(_,i)=>(-80+2*i-32)/1.8)],[ensemble.gridCoordinates,ensemble.weeks[0].temperature.p50,levels],[ensemble.gridCoordinates,ensemble.remainingDays57to60.precipitationRate.p99,[.1,.5,1,2,5,10,20,30,50]]]){const s=A(cc,v,ll,{radius:600});assert.equal(s.quality.withheld,0);assert.equal(s.quality.levels,ll.length);maximum=Math.max(maximum,checkField(cc,v,s));count+=s.length;}
+assert(performance.now()-start<10000,'Synthetic multi-field precision budget');
+const capped=A(coords,values,[.1,.3,.7],{radius:10000,maxDepth:1});assert(capped.quality.withheld>0,'Precision cap is explicit, never silent inaccurate geometry');checkField(coords,values,capped);
+console.log('PASS adaptive contours: curved-field/chord error, saddle/tie, every level, gaps/masks, cyclic seam/polar limits, zoom/limb projection bounds, topology reuse; '+count+' real-data segments, max residual '+maximum.toFixed(5)+' in '+Math.round(performance.now()-start)+'ms (synthetic, not device FPS)');
