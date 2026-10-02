@@ -32,8 +32,8 @@ function sampledGrid(coords,values){
  function sample(lon,lat){if(wrap)lon=((lon-xs[0])%360+360)%360+xs[0];const i=bracket(xs,lon),j=bracket(ys,lat);if(i<0||j<0||xs[i+1]-xs[i]>dx*1.8||ys[j+1]-ys[j]>dy*1.8)return null;const v=[g[j][i],g[j][i+1],g[j+1][i],g[j+1][i+1]];if(!v.every(Number.isFinite))return null;const x=(lon-xs[i])/(xs[i+1]-xs[i]),y=(lat-ys[j])/(ys[j+1]-ys[j]);return (1-y)*(v[0]*(1-x)+v[1]*x)+y*(v[2]*(1-x)+v[3]*x)}
  return {xs,ys,g,dx,dy,wrap,sample};
 }
-function smoothContourSegments(coords,values,levels){
- const grid=sampledGrid(coords,values),cc=[],vv=[],steps=3;
+function smoothContourSegments(coords,values,levels,steps=3){
+ const grid=sampledGrid(coords,values),cc=[],vv=[];
  // Subdivide the same bilinear field rather than smoothing across missing cells.
  for(let j=0;j<grid.ys.length-1;j++)for(let sy=0;sy<steps;sy++){
   const y=grid.ys[j]+(grid.ys[j+1]-grid.ys[j])*sy/steps;

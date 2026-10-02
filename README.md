@@ -27,6 +27,7 @@ A day-by-day GFS briefing with UTC date windows and the longer-range extension k
 - **Your local outlook:** search a city or five-digit US ZIP code, choose a result, and get a seven-day GFS briefing with a separate days 8–16 extension. Temperature highs/lows, precipitation totals, and maximum wind also appear in a readable table.
 - **A shared map and location:** the selected city's gold marker stays on the globe across daily, regional, and global views. Temperature and precipitation are the primary controls; Fahrenheit is the default, with a Celsius toggle.
 - **Worldwide maps:** Daily maps open with global CFSv2 temperature fields; Weekly maps show all seven empirical quantiles from a16-member CFSv2 ensemble across both hemispheres and oceans. Regional raw/anomaly products remain explicitly labeled. A named region control moves the camera without replacing the selected weather location.
+- **Forecast playback:** play, pause, scrub, change speed or loop the loaded forecast. Exact frames retain every source statistic; smooth display linearly interpolates numeric temperature and sampled precipitation-rate fields at their actual time spacing. Cumulative AIFS rain and local daily statistics stay exact.
 - **Globe controls:** rotate, zoom, and explore smooth color fields and contours. Independent daylight controls visualize an astronomical instant without changing forecast validity. The WebGL surface has a Canvas2D compatibility fallback.
 - **Atmosphere and model lab:** explore GFS pressure-level profiles, the historical calibration pilot, and archived-forecast temperature diagnostics when observations are ready.
 
@@ -55,6 +56,20 @@ The worldwide ensemble combines members 01–04 from four consecutive 00Z initia
 - **Research is separate from live guidance.** The [calibration pilot](research/pilot/README.md) is a deterministic, no-ENSO experiment for days 15–28 across six broad CONUS regions. Ridge slightly outperformed its small neural model on held-out RMSE. It does not establish local accuracy, weeks 5–8 skill, calibrated probabilities, or a trained ENSO-aware forecast backbone.
 
 This is an exploratory project. Do not use it for safety-critical weather or aviation decisions.
+
+## Forecast playback and temporal interpolation
+
+The playback toolbar is always visible above the globe. **Smooth display** is available for gridded temperature and CFS sampled precipitation-rate fields. **Exact frames** works for all loaded forecast products; local playback follows the selected next-seven-days or days-8–16 block. History, climate normals and unavailable sources are not animated. At 1×, the actual source-time span takes 48 seconds. Speed changes scale that duration; a loop holds the last exact frame, then jumps to the first without cross-boundary interpolation.
+
+The display uses a timestamp-weighted convex combination, `(1 − α) × left + α × right`, on scalar values before color mapping. Exact endpoints retain the original arrays. There is no extrapolation, easing of weather time, invented wind advection, optical flow, spline overshoot or additional dynamical skill. Missing values stay missing, nonnegative rate endpoints stay nonnegative, and common weights preserve percentile ordering. Only a single adjacent field pair and its projected samples are cached. Rendering is capped at 12.5 updates/second with a 180-pixel field raster and native-grid contours during playback; refined contours return when paused. This bounds work but is not a device frame-rate guarantee.
+
+- CFS daily frames are rolling 24-hour sampled means, using their explicit interval bounds, including 06Z-to-06Z windows. Weekly frames are period means; the separate days57–60 tail is four days. Playback is paced between period centers, so week8 to the tail is5.5days, not7. Both source windows and the blend fraction are shown for an in-between field. The readout is a display blend of summaries, never an instantaneous forecast.
+- CFS ensemble quantiles are blended at the same percentile. This is an interpolated quantile field, not the quantile of a new interpolated member distribution, a physical ensemble-member trajectory, or a newly calibrated probability.
+- AIFS temperature uses actual valid instants and preserves the sparse retained lead spacing24/168/336/360h. Linear interpolation across six- or seven-day gaps is only a coarse visual transition; it cannot reconstruct the weather that occurred between snapshots.
+- CFS precipitation-rate blends retain mm/day-equivalent units. They are not converted to rainfall totals and are not claimed to preserve an integral of rainfall across source periods. AIFS precipitation accumulated since initialization and GFS daily precipitation totals are exact-only. Local highs, lows and maxima are also exact-only because blending them would invent subdaily behavior.
+- There is no autoplay. Reduced-motion visitors receive exact frames only. Pause, Escape, source/location/variable/unit/date changes, leaving the forecast view, hiding the page, or replacement of a source run stop active playback. Sunlight remains independently controlled.
+
+The method follows the distinction between point values, means, sums and time bounds in the [CF cell-methods convention](https://cfconventions.org/Data/cf-conventions/cf-conventions-1.12/cf-conventions.html#cell-methods). [ECMWF AIFS documentation](https://www.ecmwf.int/en/forecasts/datasets/aifs-machine-learning-data) describes the native output; this app retains a sparse subset. The [SciPy interpolation guide](https://docs.scipy.org/doc/scipy/tutorial/interpolate/1D.html) explains linear versus higher-order interpolation and overshoot. These references motivate a transparent visualization choice; they do not validate in-between forecasts.
 
 ## Run locally
 
@@ -126,6 +141,9 @@ node tests/location-search-test.cjs
 node tests/location-edge-test.cjs
 node tests/global-workspace-regression.cjs
 node tests/forecast-storage-test.mjs
+node tests/forecast-playback-test.cjs
+node tests/forecast-playback-dom-test.cjs
+node tests/forecast-playback-raster-test.cjs
 ```
 
 These tests do not replace visual browser testing. The optional `python tests/gpu-egl-validation.py` requires EGL/Mesa and Pillow and validates the production shaders offscreen; it is not a browser/device frame-rate benchmark.
