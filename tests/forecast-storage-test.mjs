@@ -14,7 +14,7 @@ class Bucket{
  async get(k){this.reads++;return this.snapshot(k)}async head(k){this.reads++;return this.snapshot(k)}
  async put(k,b,o={}){const current=this.map.get(k);if(o.onlyIf?.etagDoesNotMatch==='*'&&current)return null;if(o.onlyIf?.etagMatches&&current?.etag!==o.onlyIf.etagMatches)return null;if(this.failCAS&&k==='forecasts/latest.json')return null;const bytes=Buffer.from(typeof b==='string'?b:new Uint8Array(b)),etag=hash(Buffer.concat([bytes,Buffer.from(String(++this.writes))]));this.map.set(k,{bytes,size:bytes.length,etag,httpEtag:'"'+etag+'"',customMetadata:o.customMetadata||{},httpMetadata:o.httpMetadata||{}});return this.snapshot(k)}
 }
-let jwksCalls=0;const fetcher=async u=>{assert.equal(u,FORECAST_POLICY.jwks);jwksCalls++;return Response.json({keys:[jwk]})},bucket=new Bucket(),env={FORECASTS:bucket},svc=createForecastService({enabled:true,fetcher,clock:()=>now});
+let jwksCalls=0;const fetcher=async (u,options)=>{assert.equal(options.redirect,'manual','Workers-safe no-follow JWKS fetch');assert.equal(u,FORECAST_POLICY.jwks);jwksCalls++;return Response.json({keys:[jwk]})},bucket=new Bucket(),env={FORECASTS:bucket},svc=createForecastService({enabled:true,fetcher,clock:()=>now});
 function request(path,{method='GET',body,auth=token(),headers={}}={}){return new Request(base+path,{method,headers:{...(auth?{authorization:'Bearer '+auth}:{}),...headers},...(body===undefined?{}:{body,duplex:'half'})})}
 async function status(path,options,expected){const r=await svc.handle(request(path,options),env);assert.equal(r.status,expected,await r.text());return r}
 assert.equal(FORECAST_WRITER_ENABLED,true,'The explicitly approved scoped writer is enabled');
@@ -25,6 +25,7 @@ for(const changes of [{job_workflow_ref:FORECAST_POLICY.workflow},{job_workflow_
 await status('/api/forecasts/promote',{method:'POST',body:'{}',auth:token({job_workflow_ref:FORECAST_POLICY.workflow,job_workflow_sha:claims.workflow_sha})},400);
 for(const h of [{alg:'none'},{alg:'HS256'},{kid:'missing'},{jku:'https://evil.example'}]){const r=await svc.handle(request('/api/forecasts/promote',{method:'POST',body:'{}',auth:token({},h)}),env);assert.equal(r.status,401)}
 let forged=token();forged=forged.slice(0,-8)+'AAAAAAAA';await status('/api/forecasts/promote',{method:'POST',body:'{}',auth:forged},401);
+const redirected=createForecastService({enabled:true,clock:()=>now,fetcher:async()=>new Response('',{status:302,headers:{location:'https://untrusted.invalid/keys'}})});assert.equal((await redirected.handle(request('/api/forecasts/promote',{method:'POST',body:'{}'}),env)).status,503,'JWKS redirects fail closed');
 assert.equal(bucket.writes,0);assert.equal(jwksCalls,1,'Bounded cached JWKS lookup, including unknown kid');
 const filename='verification.json',small=Buffer.from('{}'),digest=hash(small),objectURL='/api/forecasts/objects/'+digest+'/'+filename;
 await status(objectURL,{method:'PUT',body:small,auth:null},401);await status(objectURL,{method:'PUT',body:'wrong'},400);await status(objectURL,{method:'PUT',body:small,headers:{'content-length':'9000000'}},413);
