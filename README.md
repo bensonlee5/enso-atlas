@@ -1,122 +1,129 @@
 # ENSO Atlas
-A source-honest weather exploration dashboard. A GPU-shaded globe plots actual city forecasts, not interpolated or illustrative weather fields. NOAA GFS daily temperature, precipitation and wind via Open-Meteo cover up to 16 days. Long-range guidance and experimental calibration are explicitly separated.
 
-## Run
-`python -m http.server 8080 --directory dist`
+**[Open the live ENSO Atlas →](https://enso-weather-atlas.bensonlee5.chatgpt.site/)**
 
-Node.js 22+ and Python are sufficient; no npm dependencies, API keys, subscriptions or paid services are required. Open index through HTTP rather than a file URL. Forecasts refresh when opened and cache locally for one hour; the refresh button requests new data. A dated source snapshot remains available if the API fails. Retrieval time is not forecast initialization; the GFS API does not expose cycle time.
+A weather exploration dashboard that brings a city forecast, a global globe, and longer-range model guidance into one workspace. Compare temperature and precipitation across time horizons while keeping each product's source, initialization, valid period, and limitations visible.
 
-## Data and terms
-- Weather: NOAA GFS via https://open-meteo.com/en/docs/gfs-api ; attribution is shown in app. Open-Meteo free API is for non-commercial use and subject to their rate limits/terms. A monetized or high-traffic deployment requires reviewing https://open-meteo.com/en/terms and choosing an approved service. No purchase made.
-- Geographic boundaries: Natural Earth, downloaded from datasets/geo-countries, simplified for display. https://github.com/datasets/geo-countries ; boundaries do not imply endorsement of territorial claims.
-- ENSO context: dated NOAA CPC September 10, 2026 advisory. https://www.cpc.ncep.noaa.gov/products/analysis_monitoring/enso_advisory/ensodisc.shtml
-- All daily forecast dates are UTC. A deterministic run does not provide a calibrated confidence interval.
+## Explore the atlas
 
-## Research
-See `research/` for reproducible calibration and data preparation. No trained backbone or measured skill is claimed until an actual run is evaluated on independent data. Do not use for safety-critical decisions.
+- **Your local outlook:** search a city or five-digit US ZIP code, choose a result, and get a seven-day GFS briefing with a separate days 8–16 extension. Temperature highs/lows, precipitation totals, and maximum wind also appear in a readable table.
+- **A shared map and location:** the selected city's gold marker stays on the globe across daily, regional, and global views. Temperature and precipitation are the primary controls; Fahrenheit is the default, with a Celsius toggle.
+- **Longer-range guidance:** inspect CFSv2 weekly fields, seven empirical ensemble quantiles, official CPC weekly anomalies, and observed Niño 3.4 SST context. Global CFSv2 and ECMWF AIFS views provide additional model context.
+- **Globe controls:** rotate, zoom, and explore smooth color fields and contours. Independent daylight controls visualize an astronomical instant without changing forecast validity. The WebGL surface has a Canvas2D compatibility fallback.
+- **Atmosphere and model lab:** explore GFS pressure-level profiles, the historical calibration pilot, and archived-forecast temperature diagnostics when observations are ready.
 
-## Deployment
-The static directory is portable to ordinary static hosting. The public source is portable and excludes private deployment configuration. Public GitHub source and website access are separate.
+The selected location, units, and horizon are remembered in the current browser. **Clear saved city** removes the saved location and its forecast cache and returns to the San Francisco sample. There is no account synchronization or GPS request. City/ZIP searches go to Open-Meteo only on submission; selected coordinates are sent for weather retrieval. ZIP results identify an associated city, not an address or exact postal-area centroid.
 
-## Long-range products
-The app includes real 8-week (56-day) aggregates from 60 days of NOAA CFSv2 member01, initialized 2026-09-29 00Z, plus official CPC 16-member weekly ensemble anomalies for weeks1–4, initial date2026-09-28. Select **Weeks1–8**, then product/field/week. There is no invented weeks5–8 ensemble anomaly. Raw precipitation is a mean instantaneous rate in mm/day-equivalent, never a verified accumulation or event probability. Bundled snapshots are fallbacks; the daily GitHub workflow refreshes the public data feed. The page checks that feed on open and hourly while visible, with hash validation. `ingestion/` contains reproducible recipes. Always watch the listed initialization date.
+## Models and time horizons
 
-The calibration model and honest evaluation scaffold are in `research/`. A completed real no-ENSO calibration pilot, paired dataset, small neural weights and six-model held-out results are in `research/pilot/`. It covers days15–28 only; the ENSO-conditioned PyTorch scaffold remains unrun. See the pilot README for measured results and limits.
+| View | Source and coverage | How to read it |
+| --- | --- | --- |
+| City briefing | NOAA GFS via Open-Meteo, up to 16 days | Daily highs/lows, precipitation totals, and maximum wind; daily windows are UTC |
+| Regional outlook | NOAA CFSv2, weeks 1–8; the ensemble also includes days 57–60 | Single-member means or 16-member lagged ensemble quantiles at sampled model points |
+| Weekly anomalies | Official NOAA CPC CFSv2 16-member ensemble-mean anomalies, weeks 1–4 | Departures from the product's model climatology; no weeks 5–8 anomaly values or member percentiles |
+| Global models | CFSv2 daily sample averages through 60 days; ECMWF AIFS snapshots at lead hours 24, 168, 336, and 360 | Sampled native-grid fields; AIFS dates snap to the nearest available snapshot within its horizon |
+| Climate context | NOAA NCEP/NCAR monthly climatology, 1991–2020 | A monthly historical average beyond the selected model horizon, not weather for a future day |
+| Historical dates | NOAA NCEP/NCAR Reanalysis 1, supported from 1948-01-01 through 2026-03-17 | Reconstructed weather, not a forecast issued on that date; gaps before current forecasts remain unavailable |
 
-## Validated refresh entrypoint
-Install `ingestion/requirements.txt` from PyPI in an isolated environment, then run `python ingestion/refresh.py`. The resolver checks official indexes for the newest complete paired CFS 60-day run, extracts native-grid samples, discovers latest weekly anomaly files, reads CF time metadata, and refreshes observed ENSO. All products validate before any JSON is replaced. Individual writes are atomic; publish the complete source only after successful exit. If any source is missing, stale, malformed, or changes temporal statistics, the command fails and the previous published Site must remain unchanged. No accounts/keys are required.
+The regional ensemble combines members 01–04 from four consecutive 00Z initializations. Older runs are aligned to the same absolute valid times **before** period averaging. P1, P5, P10, P50, P90, P95, and P99 are calculated from the retained member means. These correlated, uncalibrated samples describe model spread; even P1/P99 do not establish rare-event probabilities or confidence bounds.
 
-This command updates local source, not a running website. Hosting publication or a separately configured daily update task is required. The browser does not claim that a scheduled update has run.
+### Important interpretation limits
+
+- **Rainfall statistics differ.** CFS precipitation is a mean of sampled instantaneous rates in mm/day-equivalent. AIFS precipitation is accumulated since initialization. Neither is interchangeable with the GFS daily precipitation total. Cross-model rainfall comparison and CFS rainfall verification are withheld.
+- **Smooth maps do not add resolution.** Color fields and contours interpolate within genuine grid cells; missing cells, regional boundaries, and polar caps remain empty. Regional readouts use the nearest sampled point only inside that product's footprint. GFS city points are not interpolated into a global weather field.
+- **Model disagreement is not accuracy.** The CFS/AIFS temperature comparison uses matching valid instants, but initialization times and sampled coordinates differ. It is not a skill ranking.
+- **The Earth image and lighting are context.** NASA's October 2004 Blue Marble composite is historical surface imagery, not live satellite weather. Daylight is astronomical shading; the cloud layer uses GFS hourly city-point values, not a global cloud image.
+- **Research is separate from live guidance.** The [calibration pilot](research/pilot/README.md) is a deterministic, no-ENSO experiment for days 15–28 across six broad CONUS regions. Ridge slightly outperformed its small neural model on held-out RMSE. It does not establish local accuracy, weeks 5–8 skill, calibrated probabilities, or a trained ENSO-aware forecast backbone.
+
+This is an exploratory project. Do not use it for safety-critical weather or aviation decisions.
+
+## Run locally
+
+Use **Node.js 22+** for the full app, including historical-date retrieval. There are no runtime npm dependencies or API keys.
+
+```sh
+git clone https://github.com/bensonlee5/enso-atlas.git
+cd enso-atlas
+node scripts/serve.mjs
+```
+
+Open **http://localhost:8080**. Set `PORT` to use another port. The server builds the self-contained worker from the checked-in HTML, CSS, JavaScript, and bundled data.
+
+For a static-only preview, Python 3 is enough:
+
+```sh
+python -m http.server 8080 --directory dist
+```
+
+Open the app over HTTP rather than a file URL. Static hosting supports the dashboard and bundled snapshots, but arbitrary historical-date requests require the `/api/history` server route. `node scripts/build-worker.mjs` creates `dist/server/index.js` for a Cloudflare-compatible Worker deployment. Building or editing this repository does not itself publish the live site.
+
+## Data freshness and refreshes
+
+- **City forecasts:** fetched on open, cached locally for up to one hour, and refreshed hourly while the page is visible in the daily view. The refresh button requests new GFS data. Retrieval time is not model initialization; the GFS API response does not expose its cycle time.
+- **Public model bundle:** the [GitHub Actions workflow](.github/workflows/refresh-weather.yml) is scheduled daily at **09:17 UTC**, also runs on ingestion/workflow changes, and supports manual dispatch. It validates products, archives regional outlooks, checks mature temperature periods, and commits only allowlisted data files.
+- **Browser updates:** the app checks the public bundle on open and hourly while visible, using a one-hour cache plus schema and SHA-256 validation. Failed downloads or validation retain previous data with a warning. GitHub scheduling and upstream availability can delay updates; always inspect the displayed source dates.
+- **Bundled fallbacks:** the city forecast and atmosphere snapshots are dated fallbacks, separate from the scheduled seven-product public bundle. An available page is not proof of a fresh model run.
+
+To reproduce the full ingestion pipeline, use Python 3.12 in an isolated environment and install the dependencies from [ingestion/requirements.txt](ingestion/requirements.txt):
+
+```sh
+python -m venv .venv
+. .venv/bin/activate
+python -m pip install -r ingestion/requirements.txt
+python ingestion/refresh_bundle.py
+python ingestion/verify_forecasts.py --archive-dir dist/data/archive --output dist/data/verification.json
+python ingestion/refresh_bundle.py --manifest-only
+node tests/public-data-test.cjs
+```
+
+These commands download and validate real upstream products and update local data; they do not push or deploy. Publish the complete bundle only after all steps succeed. The narrower `ingestion/refresh.py` refreshes the raw regional, weekly-anomaly, and observed-ENSO products; it is not the complete bundle entrypoint.
+
+### Archive and verification
+
+The archive preserves CFS ensemble outlooks for ten sampled locations, not every global field or every searched city. Collection began September 30, 2026; some initial forecasts were captured after their valid periods began. Existing issuance files are not rewritten, and the active index keeps 400 issuances.
+
+Temperature diagnostics wait for completed periods and an observation-latency allowance. They compare forecast P50 with NOAA CPC's `(Tmax + Tmin) / 2` at the nearest observation land-grid point. This is a **proxy diagnostic**: daily windows, sampling, and grids differ. Pending periods have no scores. Daily GFS accuracy is not evaluated by this archive, and the retrospective training pilot is a separate experiment.
 
 ## Checks
-`node --check dist/app.js`
-`node tests/app-test.cjs`
-`PYTHONPATH=research python -m unittest discover -s research/tests -v`
 
-Desktop live UI tested with GFS refresh and CFS raw/anomaly switching. Responsive CSS is implemented; an actual mobile-browser viewport test was unavailable in the build environment.
+Run these from the repository root. Python ensemble tests require NumPy from the ingestion requirements; the core research suite skips optional PyTorch checks when PyTorch is absent.
 
-## Model lab
-The live Model lab displays genuine test-set RMSE for raw CFSv2, seasonal climatology, region bias correction, ridge, a686-parameter neural residual model and lagged observations. The retrospective pilot used six broad CONUS regions and a single temporal split; ridge slightly beat the neural model overall. This is not evidence of calibrated probabilities, weeks5–8 skill, local California skill or global-backbone fine-tuning. Dataset credit: SubseasonalClimateUSA, CC BY4.0.
+```sh
+node --check dist/app.js
+for test in app briefing contours explorer-quality global-weather globe-renderer public-data smooth-field solar; do
+  node "tests/$test-test.cjs" || exit 1
+done
+node tests/worker-test.mjs
+python tests/archive-test.py
+python -m unittest discover -s tests -p 'test_*.py' -v
+PYTHONPATH=research python -m unittest discover -s research/tests -v
+```
 
-## Interaction
-The °C/°F toggle converts absolute temperature and differences correctly (anomalies/RMSE use scale only). Globe zoom supports buttons, wheel, pinch and reset, bounded65–270%. Percentiles require real member distributions; unsupported products display an unavailable selector rather than invented P10/P50/P90.
+The DOM interaction tests require **jsdom as a test-only dependency**. Install it separately and set `JSDOM_MODULE` to its installed module path if it is not on Node's normal module search path:
 
-## Real ensemble percentiles
-The4-member ensemble product uses same-cycle CFSv2 members01–04 from Sep29,2026 00Z. Select temperature or precipitation rate and P10/P50/P90. Quantiles use linear interpolation across the4 member temporal averages, with all8 source GRIB hashes in the JSON. The small, dependent ensemble provides uncalibrated model spread, not confidence bounds. Weeks1–8 cover56days; a separate Days57–60 window covers the remaining4days. `ingestion/ensemble/retrieve_ensemble.py --run YYYYMMDD00 --days 60` reproduces the product; see its README. This ensemble has its own run timestamp and is refreshed with the daily public bundle. The GFS refresh button updates the shorter-range point forecast separately.
+```sh
+node tests/integrated-workspace-test.cjs
+node tests/location-search-test.cjs
+node tests/location-edge-test.cjs
+```
 
-## Day/night, cloud cover and atmospheric columns
-Globe illumination uses approximate solar declination and UTC solar longitude at the selected forecast date/hour; for weekly products it uses the period midpoint. It is astronomical shading, not cloud imagery or a weather model. Daily high and daily low temperature remain daily statistics. The cloud layer plots real GFS hourly total cloud-cover percentages at city points and the selected UTC hour; it is not invented as a global cloud texture or long-range cloud forecast.
+These tests do not replace visual browser testing. The optional `python tests/gpu-egl-validation.py` requires EGL/Mesa and Pillow and validates the production shaders offscreen; it is not a browser/device frame-rate benchmark.
 
-The Atmosphere view fetches29 actual GFS pressure levels above user-selected coordinates. It samples at a requested geopotential altitude ASL using reported heights, not a fixed lapse rate. Temperature/humidity interpolate linearly and wind uses vectors. Levels at/below returned model terrain, missing intermediate brackets, and out-of-range altitude/time are withheld. Model terrain is coarse and not a high-resolution DEM. Default San Francisco snapshot is dated; loading other coordinates retrieves live source data. Initialization time is not supplied by this API. This profile is not a safety-critical aviation product.
+## Repository guide
 
-## Movable sunlight and isolines
-The independent sunlight slider moves the astronomical day/night boundary in15-minute UTC steps; Play animates it. It does not change forecast values or the separately selected cloud hour. For weekly guidance, shading uses the selected period's midpoint date and chosen sunlight hour.
+- [dist/](dist/): browser app, bundled datasets, and provenance metadata
+- [server/](server/) and [scripts/](scripts/): bounded historical-data endpoint, local server, and worker builder
+- [ingestion/](ingestion/): reproducible retrieval, validation, archive, and verification code
+- [Ensemble methodology](ingestion/ensemble/README.md) and [global products](ingestion/global/README.md): source formats, sampling, and scientific caveats; dated examples describe their recorded runs
+- [research/](research/README.md), [model card](research/MODEL_CARD.md), and [completed pilot](research/pilot/README.md): experimental calibration and evaluation
+- [tests/](tests/): product validation, interaction, rendering, and verification checks
 
-CFSv2 maps support Points, Contours, or Both. Isotherms and constant precipitation-rate contours use marching squares with linear interpolation only inside the real sampled rectilinear grid (raw/4-member products14×31, published anomalies11×24). They do not add model resolution. Missing cells, large grid gaps and the data boundary are not extrapolated; projected back-side segments are suppressed. Labels follow °C/°F, including anomaly scaling, and mm/day-equivalent rates; these are not accumulated-rainfall isohyets. The GFS city-point view explicitly disables contours rather than fitting a fictitious spatial field.
+## Sources and terms
 
-`node tests/contours-test.cjs` validates planar/missing/constant fields and authentic ensemble bounds.
+Forecast values retain source URLs, valid periods, and processing details in their JSON assets and the app's source panels.
 
-### Daily refresh and observed deviations
-
-The scheduled GitHub workflow runs at 09:17 UTC daily (GitHub scheduling is best-effort). It uses the public repository's standard Linux runner, no paid GPU and no external credentials. Only its job-scoped `GITHUB_TOKEN` has `contents: write`; the commit allowlist is limited to validated forecast JSON, issuance archives and verification output. A 25-minute timeout and concurrency group bound execution. The site checks the public repository hourly while open, validates hashes and schemas, and retains previous data if validation fails. Source timestamps remain visible; a scheduled job is not a freshness guarantee. GitHub may disable inactive scheduled workflows after 60 days.
-
-Before replacement, both the previous and new CFS ensemble issuance are archived immutably for the ten displayed sampled locations, including quantiles and exact valid intervals. The active index keeps 400 issuances; older small files stay available. This archives the location outlooks, not every global-grid field. A rerun never rewrites an existing issuance. Collection began September 30, 2026; the initial September 29 forecast was captured after initialization, so this is not an operational issue-time archive from that earlier date.
-
-The observation check waits for completed target periods and a source-latency allowance. Temperature verification compares P50 with NOAA CPC's mean of daily Tmax/Tmin at the nearest observation land-grid point, explicitly a diagnostic proxy for the forecast's mean of six-hourly samples. Spatial and daily-window differences remain. Precipitation verification is withheld because the displayed sampled instantaneous rate is not an accumulated rainfall forecast. Pending cases have no invented error metrics. This live archive is separate from the historical training pilot.
-
-
-### Global models, climate averages and historical dates
-
-The Global models / history view switches between genuine sampled native global CFSv2 and ECMWF AIFS fields. CFS exposes daily averages of four six-hour instantaneous samples through60days. AIFS exposes actual24/168/336/360-hour snapshots; selecting another in-range date explicitly snaps to the nearest available snapshot. Their initialization times and temporal statistics remain visible. CFS precipitation is an instantaneous-rate sample mean; AIFS precipitation is accumulated since initialization. They must not be compared as equal rainfall statistics. These deterministic global fields do not provide ensemble percentiles; the existing CONUS ensemble remains separate.
-
-Automatic date selection uses a1991–2020 monthly NOAA NCEP/NCAR climatology beyond the selected model horizon. This is a historical monthly climate average, not weather for the chosen future day and not a projection of climate change. Historical dates use real NCEP/NCAR Reanalysis1 daily grids from1948-01-01 through2026-03-17. This product ended in March2026. Dates in the gap before current forecast initialization are explicitly unavailable. Reanalysis reconstructs conditions from observations and a model; it is distinct from a forecast issued at that time and from the immutable issued-forecast archive.
-
-The public `/api/history?date=YYYY-MM-DD` route fetches only the two fixed official NOAA temperature/precipitation datasets. Strict date bounds, response-size caps, timeouts, limited concurrency and bounded caching protect the upstream and runtime. No credentials or arbitrary URL proxy are provided. `node scripts/build-worker.mjs` creates a self-contained Cloudflare-compatible Worker while preserving the plain HTML/JS app. `node scripts/serve.mjs` runs the same handler locally, including historical retrieval.
-
-
-### Explorer usability and matched-time comparison
-
-The control dock now precedes the map. Product banners distinguish forecasts, historical reconstruction, climate averages and unavailable fields. Every failed/loading state clears stale legends and source links; source-update failures retain dated data with a visible warning. Phone layouts use readable source text and generous targets. Touch scrolling stays available over the globe until Explore globe is selected; keyboard arrows pan, +/- zoom and0resets.
-
-A temperature comparison uses actual instantaneous CFS member01 samples at the exact AIFS valid timestamp. Both are2m temperature in the chosen units, with distinct initialization and native sample coordinates disclosed. The difference is model disagreement, never an accuracy score or confidence interval. The map retains its selected daily/instantaneous statistic. Rainfall comparison is withheld because CFS sampled rates and AIFS accumulation differ. The existing daily job extracts these matching CFS fields from its downloaded cache, without extra CFS network traffic.
-
-## Mobile daylight controls
-The city picker includes Palo Alto (37.4419, -122.143), with its own GFS request and the returned model coordinate disclosed. The standalone 13-city `forecast.json` fallback is not part of the daily seven-product NOAA/GitHub bundle; GFS refreshes on page open and on demand.
-
-The visible Daylight card controls an independent astronomical instant. Choose a date, time and UTC or Pacific time; changing timezone preserves the instant. Now resets to the current instant, Play advances in 15-minute steps across midnight, and Use forecast date selects noon UTC on the daily date or long-range midpoint. Weather validity does not change. Nonexistent and ambiguous Pacific DST times require a different time or explicit UTC. Solar declination and equation of time use the approximate NOAA equations at https://gml.noaa.gov/grad/solcalc/solareqns.PDF for visualization.
-
-## GPU rendering pass (October 2026)
-The planet uses a dependency-free WebGL fragment renderer with a smooth astronomical terminator, ocean reflectance and a thin atmospheric limb. Geographic labels and actual sampled weather points/isolines remain an independent Canvas2D scientific overlay. No weather interpolation, model fields, or source timestamps are changed by the surface renderer. WebGL failure/context loss falls back to the existing compatibility globe. Camera selection uses short great-longitude-path easing; reduced-motion preferences skip that animation. Rendering is on demand, pixel ratio is capped at 1.5, and animations stop when the document is hidden.
-
-Basemap: NASA Earth Observatory, Blue Marble Next Generation, October **2004** cloud-free composite (2048×1024 derivative). This is historical reference surface imagery, **not current satellite weather**, cloud observations, or a forecast. Terrain appearance comes from the source composite; the renderer adds no elevation forecast or synthetic clouds. Source: https://science.nasa.gov/earth/earth-observatory/blue-marble-next-generation/base-map/ ; original https://assets.science.nasa.gov/content/dam/science/esd/eo/images/bmng/bmng-base/october/world.200410.3x5400x2700.jpg .
-
-The forecast timeline sits below the globe. On small screens, Location details opens the current point's full readout; independent sunlight date/time controls are collapsible. All model/historical/climatology labels and uncertainty caveats remain.
-
-Renderer QA: `node tests/globe-renderer-test.cjs` checks setup/fallback/projection. Optional `python tests/gpu-egl-validation.py` compiles and links the exact production GLSL ES shaders in an independent Mesa EGL context, renders the actual NASA asset offscreen, and saves `/tmp/enso-gpu-shader-validation.png`. It requires system EGL/Mesa and Pillow. Its software-render microbenchmark is not browser/device frame rate.
-
-## Mission workspace and seven-day briefing
-The working shell shares location, model, variable, valid time and source status. Horizon and temperature/precipitation controls precede the Earth. A wider inspector stays in normal flow; mobile exposes the selected reading in the operating strip and the full inspector below a short map. Source details and independent illumination controls are disclosures. The unshaded analysis setting prevents astronomical darkness from being read as forecast intensity.
-
-The seven-day briefing uses existing real GFS daily high/low, precipitation totals and maximum wind. A separate Days 8–16 extension preserves the increasing-lead caution. Every chart value is in a keyboard-readable table. UTC daily windows, missing values and dated fallback sources remain explicit. Fahrenheit defaults for new visitors; units, horizon and location persist locally. CFSv2 only locations and out-of-footprint selections remain selected and report unavailable data instead of choosing another city.
-
-Continuous CFSv2 color fields and dense, smoothed contours interpolate only within genuine source cells. This adds display smoothness, not physical resolution. Missing cells, regional coverage boundaries and polar caps remain empty. Seven empirical member quantiles are calculated from retained, aligned four-member means; they are not calibrated event probabilities. The October 1 tail recovery exactly reproduces earlier P10/P50/P90 and their original eight source hashes.
-
-Verification opens with a compact pending state until complete observation periods exist. The CPC daily-extrema proxy mismatch remains prominent. No daily GFS accuracy scores are claimed: immutable issue-time daily archives and a defensibly matched observation pipeline remain a separate next-stage prerequisite. Atmosphere opens at the nearest available source time, labels dated and past data, and distinguishes the selected location from any previously loaded column.
-
-Additional checks: `node tests/briefing-test.cjs`, `node tests/smooth-field-test.cjs`, and `python -m unittest discover -s tests -p 'test_*.py'`. The optional `tests/integrated-workspace-test.cjs` uses jsdom as a test-only dependency (or `JSDOM_MODULE` pointing to its installed module); it exercises real datasets, horizon/day/unit changes, coverage, location continuity, atmosphere context and verification empty state. It is not a visual browser test.
-
-## Automatic updates and sixteen-member aligned outlook
-The current outlook combines four initialized CFSv2 members from each of four consecutive 00Z cycles, aligned on the same absolute valid intervals. The October 1 release therefore contains 16 real member forecasts from September 28–October 1, with all seven displayed quantiles recomputed from retained member means. Lagged starts are related samples, not 16 independent observations; spread remains uncalibrated. Every contributing source and initialization remains in provenance.
-
-The daily GitHub job remains at 09:17 UTC and now also runs for ingestion/workflow changes, without triggering on its own data commits. It publishes a complete hash-validated public bundle. Open pages check the public bundle hourly; GFS city data also refresh hourly while visible. The Site may retain an older bundled fallback when offline or validation fails; the displayed source status identifies that condition. Checking a source does not imply a new model initialization.
-
-## City search and browser-local location
-Search any city name (add a state/country to distinguish matches) or a five-digit US ZIP code, then choose a labeled result. Open-Meteo geocoding / GeoNames supplies city coordinates. ZIP searches select an associated city, not an exact postal-area centroid or address. Search happens only on submit; typing and returning to the page do not send geocoding requests. Open-Meteo receives submitted queries and selected coordinates for weather retrieval; its terms describe provider request logging. No GPS permission, account, API key, or precise device location is used.
-
-The selected location is versioned and validated in browser-local storage. Returning restores the label and coordinates and loads the selected city's actual GFS forecast (or a validated same-location cache); corrupt/blocked storage fails safely. Change and Clear saved city controls are visible. Clear returns to the San Francisco sample and removes the saved location and its forecast cache. This is per browser/device and is not account synchronization.
-
-The gold globe marker stays at the selected coordinates in daily, regional and global views. GFS uses an actual request at those coordinates with the returned model point disclosed. Regional CFS products use the nearest genuine grid sample only within their own current footprint; outside coverage the selected city remains visible without another city's forecast. Global fields retain their native coarse-grid provenance.
-
-City search is attributed to Open-Meteo / GeoNames under CC BY 4.0. The existing noncommercial Open-Meteo service limits still apply (600/minute, 5,000/hour, 10,000/day and 300,000/month at implementation). Review https://open-meteo.com/en/terms and https://open-meteo.com/en/pricing before commercial/high-traffic use.
-
-`JSDOM_MODULE=/path/to/jsdom node tests/location-search-test.cjs` covers query/ZIP validation, multiple matches, keyboard results, stale-response suppression, selected-coordinate forecasts, cross-product continuity and outside-coverage readouts, reload, clear, corrupt storage and blocked storage.
+- **NOAA / Open-Meteo:** [GFS API](https://open-meteo.com/en/docs/gfs-api), [CPC weekly CFSv2 products](https://www.cpc.ncep.noaa.gov/products/CFSv2/weekly/), [observed ENSO indices](https://www.cpc.ncep.noaa.gov/data/indices/wksst9120.for), and [NOAA PSL datasets](https://psl.noaa.gov/data/gridded/)
+- **Open-Meteo / GeoNames:** city geocoding and weather data require attribution. The free Open-Meteo service is for noncommercial use and has request limits; review its [terms and privacy](https://open-meteo.com/en/terms) and [pricing](https://open-meteo.com/en/pricing) before commercial or high-traffic deployment
+- **ECMWF AIFS:** [ECMWF Open Data](https://www.ecmwf.int/en/forecasts/datasets/open-data), with CC BY 4.0 attribution
+- **Map context:** [Natural Earth boundaries via geo-countries](https://github.com/datasets/geo-countries) and [NASA Blue Marble Next Generation](https://science.nasa.gov/earth/earth-observatory/blue-marble-next-generation/base-map/); displayed boundaries do not imply endorsement of territorial claims
+- **Pilot dataset:** Microsoft's [SubseasonalClimateUSA](https://github.com/microsoft/subseasonal_data), CC BY 4.0, with derived-data processing documented in the pilot
