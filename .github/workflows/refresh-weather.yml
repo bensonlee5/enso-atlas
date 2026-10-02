@@ -99,6 +99,11 @@ jobs:
         run: python3 ingestion/publish_forecasts.py validate --data "$RUNNER_TEMP/forecast-work/data"
       - name: Publish changed objects, atomically promote, and read back
         run: python3 ingestion/publish_forecasts.py publish --data "$RUNNER_TEMP/forecast-work/data" --state "$RUNNER_TEMP/forecast-work/state.json"
+      - name: Verify every active stored object
+        run: >-
+          python3 ingestion/publish_forecasts.py restore
+          --data "$RUNNER_TEMP/forecast-readback/data"
+          --state "$RUNNER_TEMP/forecast-readback/state.json"
       - name: Record operator result
         if: always()
         run: |

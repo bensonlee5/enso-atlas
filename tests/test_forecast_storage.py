@@ -79,6 +79,10 @@ class ForecastStorageTests(unittest.TestCase):
   source=(ROOT/'.github/workflows/refresh-weather.yml').read_text();prepare,publish=source.split('\n  publish:\n')
   self.assertNotIn('id-token: write',prepare);self.assertIn('id-token: write',publish)
   self.assertNotIn('pip install',publish);self.assertIn('artifact-ids: ${{ needs.prepare.outputs.artifact-id }}',publish)
+  self.assertIn('Verify every active stored object',publish)
+  self.assertIn('python3 ingestion/publish_forecasts.py restore',publish)
+  self.assertIn('$RUNNER_TEMP/forecast-readback/data',publish)
+  self.assertNotIn('--allow-bootstrap',publish)
   self.assertIn("cron: '17 15 * * *'",source);self.assertIn("cron: '17 3,9,21 * * *'",source);self.assertIn('retention-days: 1',source)
   self.assertNotIn('git push',source);self.assertNotIn('contents: write',source)
  def test_unchanged_raw_and_global_cycle_skips_grib_download(self):
