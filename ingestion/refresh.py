@@ -2,7 +2,7 @@
 Usage: python ingestion/refresh.py [--output dist/data]
 Dependencies: eccodes numpy h5py. No accounts or keys. No hosting or GitHub writes.
 """
-import argparse, concurrent.futures, datetime as dt, json, math, os, pathlib, re, tempfile
+import argparse, concurrent.futures, datetime as dt, json, math, os, pathlib, re, tempfile, subprocess, sys
 import numpy as np
 import h5py
 from download_process import get, decode
@@ -22,11 +22,21 @@ def discover_cfs():
     if all(len(x)>=241 for x in indexes): return day,hour,urls,indexes
    except Exception: continue
  raise ValueError('No complete paired 60-day CFS run among latest three days')
-def raw(tmp):
+def raw(tmp,previous=None,global_output=None,compare_with=None):
  day,hour,urls,indexes=discover_cfs();init=dt.datetime.strptime(day+hour,'%Y%m%d%H').replace(tzinfo=UTC)
+ global_previous=json.loads(global_output.read_text()) if global_output and global_output.exists() else None
+ same_global=global_output is None or global_previous and dt.datetime.fromisoformat(global_previous['run'].replace('Z','+00:00'))==init
+ if previous and dt.datetime.fromisoformat(previous['run'].replace('Z','+00:00'))==init and same_global:return previous
  def download(i):
   p=tmp/f'cfs-{i}.grib2';p.write_bytes(get(urls[i],0,int(indexes[i][240].split(':')[1])-1));return decode(p)
  with concurrent.futures.ThreadPoolExecutor(max_workers=2) as pool:fields=list(pool.map(download,[0,1]))
+ if global_output:
+  # Reuse these exact two downloaded global GRIB files before temporary cleanup.
+  # No second source download and no ensemble refresh on a fast run.
+  global_output.parent.mkdir(parents=True,exist_ok=True)
+  command=[sys.executable,str(pathlib.Path(__file__).parent/'global/extract_global.py'),'--model','cfs','--run',day+hour,'--temperature',str(tmp/'cfs-0.grib2'),'--precipitation',str(tmp/'cfs-1.grib2'),'--output',str(global_output)]
+  if compare_with:command+=['--compare-with',str(compare_with)]
+  subprocess.run(command,check=True,timeout=300)
  coords=fields[0][0]['coordinates']
  for i,frames in enumerate(fields):
   if len(frames)!=240:raise ValueError('Expected exactly 240 six-hour fields')
@@ -46,10 +56,12 @@ def raw(tmp):
  return out
 
 def text_attr(x):return x.decode() if isinstance(x,bytes) else str(x)
-def anomaly(tmp):
+def anomaly(tmp,previous=None):
  html=get(CPC).decode();dates=sorted(set(re.findall(r'CFSv2\.(?:prec|tmpsfc)\.(\d{8})\.wkly\.anom\.nc',html)),reverse=True)
  if not dates:raise ValueError('Cannot discover current weekly anomaly product')
- day=dates[0];out={'model':'NOAA CPC CFSv2 weekly ensemble anomalies','initialDate':str(dt.datetime.strptime(day,'%Y%m%d').date()),'ensembleMembers':16,'kind':'Published ensemble-mean anomaly, not probability','retrievedAt':dt.datetime.now(UTC).isoformat(),'fields':{}}
+ day=dates[0]
+ if previous and previous['initialDate']==str(dt.datetime.strptime(day,'%Y%m%d').date()):return previous
+ out={'model':'NOAA CPC CFSv2 weekly ensemble anomalies','initialDate':str(dt.datetime.strptime(day,'%Y%m%d').date()),'ensembleMembers':16,'kind':'Published ensemble-mean anomaly, not probability','retrievedAt':dt.datetime.now(UTC).isoformat(),'fields':{}}
  for v in ['prec','tmpsfc']:
   url=f'{CPC}data/CFSv2.{v}.{day}.wkly.anom.nc';p=tmp/f'{v}.nc';p.write_bytes(get(url))
   with h5py.File(p) as f:
@@ -81,9 +93,12 @@ def enso():
  return {'source':url,'units':'°C','baseline':'1991–2020','kind':'Observed weekly sea-surface temperature indices; not ONI','observations':rows[-104:]}
 
 def main():
- p=argparse.ArgumentParser();p.add_argument('--output',type=pathlib.Path,default=pathlib.Path(__file__).parents[1]/'dist/data');args=p.parse_args();now=dt.datetime.now(UTC)
+ p=argparse.ArgumentParser();p.add_argument('--output',type=pathlib.Path,default=pathlib.Path(__file__).parents[1]/'dist/data');p.add_argument('--previous',type=pathlib.Path,help='Hash-verified previous bundle: skip unchanged raw/anomaly issuance');p.add_argument('--global-output',type=pathlib.Path);p.add_argument('--compare-with',type=pathlib.Path);args=p.parse_args();now=dt.datetime.now(UTC)
+ def previous(name):
+  path=args.previous/name if args.previous else None
+  return json.loads(path.read_text()) if path and path.exists() else None
  with tempfile.TemporaryDirectory() as temp:
-  temp=pathlib.Path(temp);products={'cfs-weekly-raw-60days.json':raw(temp),'cfs-weekly-anomalies.json':anomaly(temp),'enso-observations.json':enso()}
+  temp=pathlib.Path(temp);products={'cfs-weekly-raw-60days.json':raw(temp,previous('cfs-weekly-raw-60days.json'),args.global_output,args.compare_with),'cfs-weekly-anomalies.json':anomaly(temp,previous('cfs-weekly-anomalies.json')),'enso-observations.json':enso()}
   if now-dt.datetime.fromisoformat(products['cfs-weekly-raw-60days.json']['run'].replace('Z','+00:00'))>dt.timedelta(days=4):raise ValueError('Latest complete CFS run is over four days old')
   if now.date()-dt.date.fromisoformat(products['cfs-weekly-anomalies.json']['initialDate'])>dt.timedelta(days=14):raise ValueError('Weekly anomaly product is over fourteen days old')
   if now.date()-dt.date.fromisoformat(products['enso-observations.json']['observations'][-1]['date'])>dt.timedelta(days=21):raise ValueError('ENSO observations are over21days old')

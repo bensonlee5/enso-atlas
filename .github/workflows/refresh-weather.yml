@@ -1,63 +1,107 @@
-name: Refresh public NOAA forecasts
+name: Refresh public forecast storage
 on:
   schedule:
-    - cron: '17 9 * * *'
-  # Validate ingestion changes with an immediate bounded refresh; data commits do not match.
+    # UTC, away from the busiest top-of-hour period. Only 15:17 decodes CFS ensemble.
+    - cron: '17 15 * * *'
+    - cron: '17 3,9,21 * * *'
   push:
     branches: [main]
     paths: ['ingestion/**', '.github/workflows/refresh-weather.yml']
   workflow_dispatch:
+    inputs:
+      mode:
+        description: 'daily: CFS ensemble and all products; fast: preserve CFS ensemble'
+        type: choice
+        options: [daily, fast]
+        default: daily
 permissions:
   contents: read
 concurrency:
-  group: enso-atlas-noaa-refresh
+  group: enso-atlas-forecast-storage-refresh
   cancel-in-progress: false
 jobs:
-  refresh:
-    if: github.repository == 'bensonlee5/enso-atlas' && github.event.repository.private == false
-    runs-on: ubuntu-latest
-    timeout-minutes: 25
+  prepare:
+    if: github.repository == 'bensonlee5/enso-atlas' && github.ref == 'refs/heads/main' && github.event.repository.private == false
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
     permissions:
-      contents: write
+      contents: read
+    outputs:
+      artifact-id: ${{ steps.transfer.outputs.artifact-id }}
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4 verified
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # official v4
         with:
-          ref: main
-      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5 verified
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # official v5
         with:
           python-version: '3.12'
-      - name: Install data-decoding dependencies
-        run: python -m pip install --disable-pip-version-check -r ingestion/requirements.txt
-      - name: Download and validate complete NOAA products
-        run: python ingestion/refresh_bundle.py
-      - name: Check mature forecasts against observed temperatures
-        run: python ingestion/verify_forecasts.py --archive-dir dist/data/archive --output dist/data/verification.json
-      - name: Hash the final public data bundle
-        run: python ingestion/refresh_bundle.py --manifest-only
-      - name: Verify browser acceptance and member quantiles
-        run: node tests/public-data-test.cjs
-      - name: Commit only verified forecast data
+      - name: Select daily or lightweight refresh
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          SCHEDULE: ${{ github.event.schedule }}
+          REQUESTED_MODE: ${{ inputs.mode }}
         shell: bash
         run: |
           set -euo pipefail
-          git add -- dist/data/cfs-weekly-raw-60days.json dist/data/cfs-weekly-anomalies.json dist/data/enso-observations.json dist/data/ensemble-percentiles.json dist/data/refresh-manifest.json dist/data/verification.json dist/data/cfs-global-60days.json dist/data/aifs-global-snapshots.json dist/data/archive
-          if git diff --cached --quiet; then
-            echo 'No forecast changes'
-            exit 0
+          mode=daily
+          if [ "$EVENT_NAME" = schedule ] && [ "$SCHEDULE" = '17 3,9,21 * * *' ]; then
+            mode=fast
+          elif [ "$EVENT_NAME" = workflow_dispatch ]; then
+            mode=${REQUESTED_MODE:-daily}
           fi
-          python - <<'PY'
-          import subprocess,re
-          expected={'dist/data/cfs-weekly-raw-60days.json','dist/data/cfs-weekly-anomalies.json','dist/data/enso-observations.json','dist/data/ensemble-percentiles.json','dist/data/refresh-manifest.json','dist/data/verification.json','dist/data/archive/index.json','dist/data/cfs-global-60days.json','dist/data/aifs-global-snapshots.json'}
-          changed=set(subprocess.check_output(['git','diff','--cached','--name-only'],text=True).splitlines())
-          assert all(p in expected or re.fullmatch(r'dist/data/archive/[0-9]{10}\.json',p) for p in changed), 'Refusing unexpected staged path'
-          PY
-          git -c user.name='github-actions[bot]' -c user.email='41898282+github-actions[bot]@users.noreply.github.com' commit -m 'Refresh validated NOAA forecast data'
-          # Concurrent source edits can advance main; rebase only the generated-data commit.
-          # Conflicting data is never overwritten or force-pushed.
-          for attempt in 1 2 3; do
-            if git push origin HEAD:main; then exit 0; fi
-            git fetch origin main
-            git rebase origin/main || exit 1
-            sleep 2
-          done
-          exit 1
+          case "$mode" in daily|fast) ;; *) echo "Invalid refresh mode" >&2; exit 1 ;; esac
+          echo "REFRESH_MODE=$mode" >> "$GITHUB_ENV"
+          mkdir -p "$RUNNER_TEMP/forecast-work/data"
+      - name: Restore hash-verified last-good feed
+        shell: bash
+        run: |
+          set -euo pipefail
+          flags=()
+          if [ "$REFRESH_MODE" = daily ]; then flags+=(--allow-bootstrap); fi
+          python ingestion/publish_forecasts.py restore --data "$RUNNER_TEMP/forecast-work/data" --state "$RUNNER_TEMP/forecast-work/state.json" "${flags[@]}"
+      - name: Install data-decoding dependencies (no upload identity in this job)
+        run: >-
+          python -m pip install --disable-pip-version-check --only-binary=:all:
+          --require-hashes -r ingestion/requirements-actions.lock
+      - name: Download, decode, and validate only changed products
+        run: python ingestion/refresh_bundle.py --mode "$REFRESH_MODE" --output "$RUNNER_TEMP/forecast-work/data"
+      - name: Validate bounded object manifest
+        run: python ingestion/publish_forecasts.py validate --data "$RUNNER_TEMP/forecast-work/data"
+      - name: Transfer validated data to the isolated publisher
+        id: transfer
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # official v4.6.2
+        with:
+          name: forecast-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/forecast-work/
+          retention-days: 1
+          if-no-files-found: error
+          compression-level: 6
+  publish:
+    needs: prepare
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # official v4
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - name: Download this run's immutable validated artifact
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # official v4.3.0
+        with:
+          artifact-ids: ${{ needs.prepare.outputs.artifact-id }}
+          path: ${{ runner.temp }}/forecast-work
+          merge-multiple: true
+      - name: Validate transferred bytes before obtaining upload identity
+        run: python3 ingestion/publish_forecasts.py validate --data "$RUNNER_TEMP/forecast-work/data"
+      - name: Publish changed objects, atomically promote, and read back
+        run: python3 ingestion/publish_forecasts.py publish --data "$RUNNER_TEMP/forecast-work/data" --state "$RUNNER_TEMP/forecast-work/state.json"
+      - name: Record operator result
+        if: always()
+        run: |
+          echo 'Forecast refresh result: ${{ job.status }}' >> "$GITHUB_STEP_SUMMARY"
+          echo 'On failure, the last valid public manifest remains active. Check the feed run dates and workflow logs.' >> "$GITHUB_STEP_SUMMARY"
+          echo 'CFS ensemble: daily; raw CFS/AIFS discovery: four daily checks; intermediate artifact retention: 1 day.' >> "$GITHUB_STEP_SUMMARY"

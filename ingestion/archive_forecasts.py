@@ -19,6 +19,11 @@ def archive_product(product_path, archive_dir):
                 periods.append(period)
             locations.append({**loc,'periods':periods})
         record={'schemaVersion':1,'archivedAt':dt.datetime.now(dt.timezone.utc).isoformat(),'run':p['run'],'sourceProductSha256':hashlib.sha256(data).hexdigest(),'memberCount':p['memberCount'],'model':p['model'],'sources':p['sources'],'units':p['units'],'method':p['method'],'locations':locations}
+        # Preserve membership and source evidence for lagged products. Earlier
+        # immutable four-member archives intentionally retain their original schema.
+        for field in ('memberIDs', 'members', 'laggedEnsemble', 'lagDays', 'initializationRange', 'quantileMethod', 'provenance', 'coverage', 'sampling'):
+            if field in p:
+                record[field] = p[field]
         # Exclusive creation means a later retrieval cannot rewrite an issued forecast.
         with dest.open('x') as f: json.dump(record,f,separators=(',',':'));f.write('\n')
     record=json.loads(dest.read_text())
@@ -26,8 +31,8 @@ def archive_product(product_path, archive_dir):
     index=json.loads(index_path.read_text()) if index_path.exists() else {'schemaVersion':1,'issuances':[]}
     entries={x['run']:x for x in index['issuances']}
     entries[record['run']]={'run':record['run'],'path':key,'sha256':hashlib.sha256(dest.read_bytes()).hexdigest(),'archivedAt':record['archivedAt']}
-    # The rolling verification window bounds traffic. Older immutable files remain in Git.
+    # Bound the active verification window. This never deletes historical data.
     index['issuances']=sorted(entries.values(),key=lambda x:x['run'])[-400:]
-    index['retention']='Latest 400 issuances indexed; older immutable files remain available in repository history and archive directory.'
+    index['retention']='Latest 400 issuances indexed for verification; older immutable objects are not automatically deleted. New forecast data is stored outside Git history.'
     index_path.write_text(json.dumps(index,indent=2)+'\n')
     return dest

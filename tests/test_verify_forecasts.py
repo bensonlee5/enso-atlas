@@ -111,6 +111,50 @@ class VerificationTests(unittest.TestCase):
             root=Path(folder);self.write_archive(root)
             self.assertEqual(len(v.load_archive(root)),1)
 
+    def test_lagged_member_identity_validation(self):
+        for count in (4, 8, 12, 16):
+            item = synthetic_issuance()
+            run = v.utc(item['run'])
+            days = count // 4
+            item.update(memberCount=count, lagDays=days, laggedEnsemble=days > 1,
+                        initializationRange=[v.iso(run-timedelta(days=days-1)), v.iso(run)])
+            item['members'] = [{'id':(run-timedelta(days=day)).strftime('%Y%m%d%H')+'/'+member,
+                                'member':member, 'initialization':v.iso(run-timedelta(days=day))}
+                               for day in range(days) for member in ('01','02','03','04')]
+            item['memberIDs'] = [m['id'] for m in item['members']]
+            v.validate_ensemble(item, run)
+            with tempfile.TemporaryDirectory() as folder:
+                root=Path(folder);self.write_archive(root,item)
+                self.assertEqual(v.load_archive(root)[0]['memberCount'],count)
+            duplicate=copy.deepcopy(item);duplicate['members'][-1]=duplicate['members'][0]
+            duplicate['memberIDs'][-1]=duplicate['memberIDs'][0]
+            with self.assertRaisesRegex(ValueError,'Duplicate'):v.validate_ensemble(duplicate,run)
+            wrong_range=copy.deepcopy(item);wrong_range['initializationRange'][0]=v.iso(run-timedelta(days=days))
+            with self.assertRaisesRegex(ValueError,'range'):v.validate_ensemble(wrong_range,run)
+            wrong_id=copy.deepcopy(item);wrong_id['members'][0]['initialization']=v.iso(run+timedelta(days=1))
+            with self.assertRaisesRegex(ValueError,'identity'):v.validate_ensemble(wrong_id,run)
+        for count in (8,12,16):
+            item=synthetic_issuance();item['memberCount']=count
+            with self.assertRaises(ValueError):v.validate_ensemble(item,v.utc(item['run']))
+
+    def test_current_product_archive_roundtrip(self):
+        # Production data is read-only input; all generated archives stay temporary.
+        from archive_forecasts import archive_product
+        product=Path(__file__).resolve().parents[1]/'dist/data/ensemble-percentiles.json'
+        original=json.loads(product.read_text())
+        with tempfile.TemporaryDirectory() as folder:
+            root=Path(folder);path=archive_product(product,root);first=path.read_bytes()
+            issuance=v.load_archive(root)[0]
+            self.assertEqual(issuance['memberCount'],original['memberCount'])
+            self.assertEqual(issuance.get('members'),original.get('members'))
+            self.assertEqual(issuance.get('initializationRange'),original.get('initializationRange'))
+            self.assertEqual(issuance.get('provenance'),original.get('provenance'))
+            archive_product(product,root)
+            self.assertEqual(path.read_bytes(),first)
+            report=v.build_report([issuance],v.utc(issuance['archivedAt']),SyntheticFixtureProvider())
+            self.assertEqual(report['temperature']['memberCounts'],[original['memberCount']])
+            self.assertNotIn('Four-member',report['temperature']['forecastStatistic'])
+
     def test_tampered_archive_rejected(self):
         with tempfile.TemporaryDirectory() as folder:
             root=Path(folder);self.write_archive(root)

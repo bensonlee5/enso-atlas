@@ -41,9 +41,14 @@ def resolve():
  raise RuntimeError('No complete AIFS run among latest 3 listed dates')
 
 def main():
- p=argparse.ArgumentParser();p.add_argument('--cache-dir',type=pathlib.Path,default=pathlib.Path(tempfile.gettempdir())/'enso-aifs-cache');p.add_argument('--output',required=True,type=pathlib.Path);p.add_argument('--cfs-run');p.add_argument('--cfs-cache-dir',type=pathlib.Path);p.add_argument('--cfs-output',type=pathlib.Path);a=p.parse_args()
+ p=argparse.ArgumentParser();p.add_argument('--cache-dir',type=pathlib.Path,default=pathlib.Path(tempfile.gettempdir())/'enso-aifs-cache');p.add_argument('--output',required=True,type=pathlib.Path);p.add_argument('--previous',type=pathlib.Path);p.add_argument('--cfs-run');p.add_argument('--cfs-cache-dir',type=pathlib.Path);p.add_argument('--cfs-output',type=pathlib.Path);a=p.parse_args()
  a.cache_dir.mkdir(parents=True,exist_ok=True);a.output.parent.mkdir(parents=True,exist_ok=True)
  run,jobs=resolve()
+ if a.previous and a.previous.exists() and not any([a.cfs_run,a.cfs_cache_dir,a.cfs_output]):
+  previous=json.loads(a.previous.read_text())
+  previous_run=datetime.datetime.fromisoformat(previous['run'].replace('Z','+00:00')).strftime('%Y%m%d%H')
+  if previous_run==run:
+   a.output.write_bytes(a.previous.read_bytes());print('Unchanged AIFS run:',run,flush=True);return
  def download(job):
   path=a.cache_dir/f'aifs.{run}.{job["lead"]}.{job["param"]}.grib2'
   if not path.exists() or path.stat().st_size!=job['bytes']:

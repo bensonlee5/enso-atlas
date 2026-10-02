@@ -14,3 +14,15 @@ ingestion/wksst9120.for
 *.json.tmp
 
 dist/server/
+
+# Generated public forecast products live in object storage, never new Git commits.
+/dist/data/cfs-weekly-raw-60days.json
+/dist/data/cfs-weekly-anomalies.json
+/dist/data/enso-observations.json
+/dist/data/ensemble-percentiles.json
+/dist/data/ensemble-member-means.json.gz
+/dist/data/verification.json
+/dist/data/cfs-global-60days.json
+/dist/data/aifs-global-snapshots.json
+/dist/data/refresh-manifest.json
+/dist/data/archive/

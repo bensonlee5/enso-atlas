@@ -68,6 +68,40 @@ def coordinate(value):
     return tuple(value)
 
 
+def validate_ensemble(issuance, run):
+    """Accept legacy four-member archives and fully identified aligned lagged runs."""
+    count = issuance.get('memberCount')
+    if issuance.get('model') != 'NOAA CFSv2' or type(count) is not int or count not in (4, 8, 12, 16):
+        raise ValueError('Expected NOAA CFSv2 4/8/12/16-member p50 product')
+    # Original immutable archives did not retain member metadata. This exception
+    # applies only to the original same-cycle four-member product.
+    if count == 4 and not any(key in issuance for key in ('memberIDs', 'members', 'laggedEnsemble', 'lagDays', 'initializationRange')):
+        return
+    days = issuance.get('lagDays')
+    if type(days) is not int or days not in (1, 2, 3, 4) or count != 4 * days or issuance.get('laggedEnsemble') is not (days > 1):
+        raise ValueError('Invalid lagged ensemble count or initialization span')
+    start = run - timedelta(days=days - 1)
+    interval = issuance.get('initializationRange')
+    if not isinstance(interval, list) or len(interval) != 2 or [utc(x) for x in interval] != [start, run]:
+        raise ValueError('Invalid ensemble initialization range')
+    members, ids = issuance.get('members'), issuance.get('memberIDs')
+    if not isinstance(members, list) or len(members) != count or not isinstance(ids, list) or len(ids) != count:
+        raise ValueError('Missing aligned ensemble membership')
+    expected = {(run - timedelta(days=day), member) for day in range(days) for member in ('01', '02', '03', '04')}
+    actual = set()
+    for index, member in enumerate(members):
+        if not isinstance(member, dict):
+            raise ValueError('Invalid ensemble member')
+        initialization = utc(member.get('initialization', ''))
+        number = member.get('member')
+        identity = initialization.strftime('%Y%m%d%H') + '/' + str(number)
+        if (initialization, number) not in expected or member.get('id') != identity or ids[index] != identity:
+            raise ValueError('Member identity differs from aligned initialization')
+        actual.add((initialization, number))
+    if actual != expected:
+        raise ValueError('Duplicate or missing aligned ensemble member')
+
+
 def load_archive(folder: Path):
     """Validate hashes and temporal shape before allowing any verification."""
     folder = folder.resolve()
@@ -101,8 +135,7 @@ def load_archive(folder: Path):
             raise ValueError('Missing source product SHA256')
         if issuance.get('units') != {'temperature': '°C', 'precipitationRate': 'mm/day'}:
             raise ValueError('Unexpected archived units')
-        if issuance.get('model') != 'NOAA CFSv2' or issuance.get('memberCount') != 4:
-            raise ValueError('Expected NOAA CFSv2 four-member p50 product')
+        validate_ensemble(issuance, run)
         locations = issuance['locations']
         if not 1 <= len(locations) <= MAX_LOCATIONS:
             raise ValueError('Expected one to ten sampled locations')
@@ -310,7 +343,7 @@ def build_report(issuances, as_of: datetime, provider, latency_days=MIN_LATENCY_
         for location in issuance['locations']:
             for period in location['periods']:
                 start, end = utc(period['intervalStart']), utc(period['intervalEndExclusive'])
-                row = {'run': issuance['run'], 'archivedAt': issuance['archivedAt'], 'archivePath': issuance['_archivePath'], 'archiveSha256': issuance['_archiveSha256'], 'name': location['name'], 'nativeGridCoordinate': location['nativeGridCoordinate'], 'requestedCoordinate': location['requestedCoordinate'], 'leadWeek': period['leadWeek'], 'intervalStart': period['intervalStart'], 'intervalEndExclusive': period['intervalEndExclusive'], 'eligibleAfter': iso(end + timedelta(days=latency_days)), 'forecastP50': period['temperature']['p50'], 'observedProxy': None, 'error': None, 'archivedAfterValidStart': utc(issuance['archivedAt']) > start, 'daysExpected': (end-start).days, 'daysObserved': 0, 'partialPeriod': period['leadWeek'] == 9, 'periodLabel': 'Days 57–60 (4 days)' if period['leadWeek'] == 9 else f'Week {period["leadWeek"]}'}
+                row = {'run': issuance['run'], 'archivedAt': issuance['archivedAt'], 'archivePath': issuance['_archivePath'], 'archiveSha256': issuance['_archiveSha256'], 'name': location['name'], 'memberCount': issuance['memberCount'], 'laggedEnsemble': issuance.get('laggedEnsemble', False), 'nativeGridCoordinate': location['nativeGridCoordinate'], 'requestedCoordinate': location['requestedCoordinate'], 'leadWeek': period['leadWeek'], 'intervalStart': period['intervalStart'], 'intervalEndExclusive': period['intervalEndExclusive'], 'eligibleAfter': iso(end + timedelta(days=latency_days)), 'forecastP50': period['temperature']['p50'], 'observedProxy': None, 'error': None, 'archivedAfterValidStart': utc(issuance['archivedAt']) > start, 'daysExpected': (end-start).days, 'daysObserved': 0, 'partialPeriod': period['leadWeek'] == 9, 'periodLabel': 'Days 57–60 (4 days)' if period['leadWeek'] == 9 else f'Week {period["leadWeek"]}'}
                 counts['temperatureForecasts'] += 1
                 counts['archivedLate'] += int(row['archivedAfterValidStart'])
                 dates = [start.date() + timedelta(days=i) for i in range(row['daysExpected'])]
@@ -367,7 +400,7 @@ def build_report(issuances, as_of: datetime, provider, latency_days=MIN_LATENCY_
         status = 'observations_unavailable'
     else:
         status = 'awaiting_mature_periods'
-    return {'schemaVersion': VERSION, 'generatedAt': iso(datetime.now(UTC)), 'asOf': iso(as_of), 'status': status, 'counts': dict(counts), 'minimumLatencyDays': latency_days, 'temperature': {'units': '°C', 'label': METRIC_LABEL, 'truth': 'CPC (Tmax+Tmin)/2 weekly-mean proxy', 'truthKind': provider.kind, 'forecastStatistic': 'Four-member p50 of 28 six-hourly samples per member per week', 'observationStatistic': 'Seven-day arithmetic average of paired daily (Tmax+Tmin)/2; separate four-day final-period diagnostic', 'metricDefinition': 'error = forecastP50 − observedProxy; bias = mean(error); MAE = mean(abs(error)); RMSE = sqrt(mean(error²))', 'overall': metrics([p['error'] for p in observed]), 'byLead': by_lead, 'byLocation': by_location, 'byLeadLocation': by_both, 'partialDays57to60': {'label': 'Days 57–60 (4 days), excluded from full-week aggregates', **metrics([p['error'] for p in partial]), 'byLocation': [{'name': name, **metrics([p['error'] for p in partial if p['name'] == name])} for name in names]}, 'pairs': pairs}, 'precipitation': {'status': 'incompatible_statistic', 'n': 0, 'bias': None, 'mae': None, 'rmse': None, 'reason': 'Archived CFS precipitation is a mean sampled instantaneous rate in mm/day-equivalent. It is not a validated accumulated amount or time-integrated mean rate; direct scoring against daily accumulated rainfall would compare incompatible temporal statistics.'}, 'source': {'name': 'NOAA CPC Global Daily Temperature V1.0, served by NOAA PSL', 'documentation': SOURCE_DOCUMENTATION, 'endpointTemplate': SOURCE_ROOT + '/{tmax|tmin}.{year}.nc', 'latestAvailableDates': provider.latest_available_dates, 'actualAvailabilityCheck': 'NOAA annual time dimension plus exact per-row daily timestamps and complete finite Tmax/Tmin coverage', 'observationRevisionPolicy': 'Re-fetch needed source subsets on each run; immutable response hashes and optional evidence files preserve each evaluated source version.'}, 'sourceProvenance': provider.provenance, 'sourceErrors': provider.errors, 'warnings': warnings}
+    return {'schemaVersion': VERSION, 'generatedAt': iso(datetime.now(UTC)), 'asOf': iso(as_of), 'status': status, 'counts': dict(counts), 'minimumLatencyDays': latency_days, 'temperature': {'units': '°C', 'label': METRIC_LABEL, 'truth': 'CPC (Tmax+Tmin)/2 weekly-mean proxy', 'truthKind': provider.kind, 'forecastStatistic': 'P50 across archived aligned member means of 28 six-hourly samples per full week; original member count retained per issuance', 'memberCounts': sorted({i['memberCount'] for i in issuances}), 'observationStatistic': 'Seven-day arithmetic average of paired daily (Tmax+Tmin)/2; separate four-day final-period diagnostic', 'metricDefinition': 'error = forecastP50 − observedProxy; bias = mean(error); MAE = mean(abs(error)); RMSE = sqrt(mean(error²))', 'overall': metrics([p['error'] for p in observed]), 'byLead': by_lead, 'byLocation': by_location, 'byLeadLocation': by_both, 'partialDays57to60': {'label': 'Days 57–60 (4 days), excluded from full-week aggregates', **metrics([p['error'] for p in partial]), 'byLocation': [{'name': name, **metrics([p['error'] for p in partial if p['name'] == name])} for name in names]}, 'pairs': pairs}, 'precipitation': {'status': 'incompatible_statistic', 'n': 0, 'bias': None, 'mae': None, 'rmse': None, 'reason': 'Archived CFS precipitation is a mean sampled instantaneous rate in mm/day-equivalent. It is not a validated accumulated amount or time-integrated mean rate; direct scoring against daily accumulated rainfall would compare incompatible temporal statistics.'}, 'source': {'name': 'NOAA CPC Global Daily Temperature V1.0, served by NOAA PSL', 'documentation': SOURCE_DOCUMENTATION, 'endpointTemplate': SOURCE_ROOT + '/{tmax|tmin}.{year}.nc', 'latestAvailableDates': provider.latest_available_dates, 'actualAvailabilityCheck': 'NOAA annual time dimension plus exact per-row daily timestamps and complete finite Tmax/Tmin coverage', 'observationRevisionPolicy': 'Re-fetch needed source subsets on each run; immutable response hashes and optional evidence files preserve each evaluated source version.'}, 'sourceProvenance': provider.provenance, 'sourceErrors': provider.errors, 'warnings': warnings}
 
 
 def write_report(path: Path, report):
@@ -393,7 +426,7 @@ def main():
         parser.error('--as-of may not be in the future')
     issuances = load_archive(args.archive_dir)
     report = build_report(issuances, as_of, CPCProvider(args.evidence_dir), args.latency_days)
-    report['archiveProvenance'] = [{'run': i['run'], 'archivedAt': i['archivedAt'], 'path': i['_archivePath'], 'sha256': i['_archiveSha256'], 'sourceProductSha256': i['sourceProductSha256']} for i in issuances]
+    report['archiveProvenance'] = [{'run': i['run'], 'archivedAt': i['archivedAt'], 'path': i['_archivePath'], 'sha256': i['_archiveSha256'], 'sourceProductSha256': i['sourceProductSha256'], 'memberCount': i['memberCount'], 'laggedEnsemble': i.get('laggedEnsemble', False), 'initializationRange': i.get('initializationRange', [i['run'], i['run']])} for i in issuances]
     report['verificationRecipe'] = {'scriptSha256': digest(Path(__file__).read_bytes()), 'minimumLatencyDays': args.latency_days, 'asOf': iso(as_of), 'fullPairsIncluded': args.include_pairs, 'maxActiveIssuances': MAX_ISSUANCES, 'networkBudgetSeconds': 240, 'requestBudget': 80}
     if not args.include_pairs:
         report['temperature']['auditPairCount'] = len(report['temperature'].pop('pairs'))

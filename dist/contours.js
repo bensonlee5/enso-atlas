@@ -24,7 +24,7 @@ function contourSegments(coords,values,levels){
 function sampledGrid(coords,values){
  const ys=[...new Set(coords.map(c=>c[0]))].sort((a,b)=>a-b),xs=[...new Set(coords.map(c=>c[1]))].sort((a,b)=>a-b);
  const gap=a=>{const g=a.slice(1).map((v,i)=>v-a[i]).sort((a,b)=>a-b);return g[Math.floor(g.length/2)]||0};
- const dx=gap(xs),dy=gap(ys),wrap=xs.length>3&&Math.abs(xs.at(-1)-xs[0]+dx-360)<dx*.2;
+ const dx=gap(xs),dy=gap(ys),seam=360-(xs.at(-1)-xs[0]),wrap=xs.length>3&&seam>0&&seam<=dx*1.8&&xs.at(-1)-xs[0]>=270;
  const xi=new Map(xs.map((x,i)=>[x,i])),yi=new Map(ys.map((y,i)=>[y,i]));
  const g=Array.from({length:ys.length},()=>Array(xs.length).fill(null));coords.forEach((c,i)=>{g[yi.get(c[0])][xi.get(c[1])]=values[i]});
  if(wrap){xs.push(xs[0]+360);g.forEach(r=>r.push(r[0]))}

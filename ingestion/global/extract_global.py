@@ -7,6 +7,16 @@ python extract_global.py --model aifs --run 2026092912 --temperature aifs-24-2t.
 import argparse,datetime,json,pathlib
 import numpy as np,eccodes as e
 
+def cfs_daily_window(initialization,day_index):
+ """Nominal rolling 24-hour window plus exact sampled instants.
+
+ The four instantaneous values are at +6/+12/+18/+24 hours from the
+ nominal window start. Their mean is not a continuous calendar-day integral.
+ """
+ start=initialization+datetime.timedelta(days=day_index)
+ end=start+datetime.timedelta(days=1)
+ return {'date':start.date().isoformat(),'intervalStart':start.isoformat(),'intervalEndExclusive':end.isoformat(),'firstSampleTime':(start+datetime.timedelta(hours=6)).isoformat(),'lastSampleTime':end.isoformat(),'firstSampleHour':day_index*24+6,'lastSampleHour':(day_index+1)*24}
+
 def read(paths,run,var,stride=4):
  frames=[];coords=None
  for path in paths:
@@ -42,10 +52,10 @@ def main():
   n=a.days*4;assert len(t)>=n and len(r)>=n
   for frames in [t,r]:
    for i,f in enumerate(frames[:n]):assert f['metadata']['endStep']==(i+1)*6 and f['metadata']['stepType']=='instant'
-  out.update(member='01',kind='single-member four-snapshot daily average',days=[])
+  out.update(member='01',kind='single-member rolling 24-hour sampled mean',days=[])
   for i in range(a.days):
-   out['days'].append({'date':(init+datetime.timedelta(days=i)).date().isoformat(),'firstSampleHour':i*24+6,'lastSampleHour':(i+1)*24,'temperatureC':np.mean([f['values'] for f in t[i*4:i*4+4]],axis=0).round(2).tolist(),'precipitationMmDay':np.mean([f['values'] for f in r[i*4:i*4+4]],axis=0).round(2).tolist()})
-  out['method']+='; 4 instantaneous 6-hour samples averaged per day; precipitation average rate is not exact accumulated rainfall'
+   out['days'].append({**cfs_daily_window(init,i),'temperatureC':np.mean([f['values'] for f in t[i*4:i*4+4]],axis=0).round(2).tolist(),'precipitationMmDay':np.mean([f['values'] for f in r[i*4:i*4+4]],axis=0).round(2).tolist()})
+  out['method']+='; 4 instantaneous samples at +6/+12/+18/+24 hours from each nominal 24-hour window start are averaged. Non-00Z runs use rolling windows, not midnight-to-midnight calendar days. Precipitation average rate is not exact accumulated rainfall'
   out['sources']=[f'https://nomads.ncep.noaa.gov/pub/data/nccf/com/cfs/prod/cfs.{a.run[:8]}/{a.run[8:]}/time_grib_01/{v}.01.{a.run}.daily.grb2' for v in ['tmp2m','prate']]
   if a.compare_with:
    other=json.loads(pathlib.Path(a.compare_with).read_text());other_init=datetime.datetime.fromisoformat(other['run'].replace('Z','+00:00'))
