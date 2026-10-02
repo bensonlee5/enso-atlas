@@ -35,7 +35,7 @@ function renderComparison(){
  const small=document.createElement('small');small.textContent='CFS initialized '+cf.run.slice(0,16)+' at grid '+cf.gridCoordinates[ci].map(x=>x.toFixed(2)).join(', ')+'; AIFS initialized '+ai.run.slice(0,16)+' at grid '+ai.gridCoordinates[aii].map(x=>x.toFixed(2)).join(', ')+'. Different grids and initialization times remain. This difference is model disagreement, not a confidence interval or an accuracy score.';area.appendChild(small);
 }
 
-const selectForecastHorizon=setHorizon;setHorizon=function(value){selectForecastHorizon(value);if(typeof matchMedia==='function'&&matchMedia('(max-width:760px)').matches)$('forecastSettings').open=true};
+// The compact settings disclosure keeps the visitor's chosen open state across horizons.
 if(typeof matchMedia==='function'&&matchMedia('(max-width:760px)').matches)$('forecastSettings').open=false;
 
 for(const button of document.querySelectorAll('[data-view],[data-focus]'))button.addEventListener('click',syncExplorerState);

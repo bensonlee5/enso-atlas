@@ -3,7 +3,7 @@
 const assert=require('node:assert/strict'),{boot,sleep}=require('./location-search-test.cjs');
 (async()=>{
  let t=await boot();await sleep(25);assert.equal(t.$('forecastPlaybackMode').value,'exact');assert.equal(t.$('forecastPlaybackMode').options[0].disabled,true);t.dom.window.close();
- t=await boot({},false,{reducedMotion:false});await sleep(25);const w=t.w,$=t.$;
+ t=await boot({},false,{reducedMotion:false,legacyAifs:true});await sleep(25);const w=t.w,$=t.$;
  const change=(id,v)=>{$(id).value=String(v);$(id).dispatchEvent(new w.Event('change',{bubbles:true}));},mode=v=>w.document.querySelector('[data-horizon="'+v+'"]').click();
  let queue=new Map(),serial=0,now=0;w.requestAnimationFrame=fn=>{queue.set(++serial,fn);return serial};w.cancelAnimationFrame=id=>queue.delete(id);
  // Prevent canvas work (tested separately). Advance the actual playback RAF callbacks.

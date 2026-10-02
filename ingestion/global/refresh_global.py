@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Resolve latest complete public AIFS run and fetch 8 individual GRIB messages.
+"""Resolve latest complete public AIFS run and fetch first-week 6-hourly and sparse longer-range GRIB fields.
 Dependencies: numpy, eccodes; extract_global.py adjacent. No secrets/services.
 python refresh_global.py --cache-dir ./weather-cache --output ./aifs-global-snapshots.json
 Optionally reuse CFS cache: --cfs-run YYYYMMDDHH --cfs-cache-dir ./ensemble-cache --cfs-output ./cfs-global-60days.json
@@ -47,28 +47,11 @@ def main():
  if a.previous and a.previous.exists() and not any([a.cfs_run,a.cfs_cache_dir,a.cfs_output]):
   previous=json.loads(a.previous.read_text())
   previous_run=datetime.datetime.fromisoformat(previous['run'].replace('Z','+00:00')).strftime('%Y%m%d%H')
-  if previous_run==run:
+  if previous_run==run and previous.get('fineFirstWeek',{}).get('schemaVersion')==1:
    a.output.write_bytes(a.previous.read_bytes());print('Unchanged AIFS run:',run,flush=True);return
- def download(job):
-  path=a.cache_dir/f'aifs.{run}.{job["lead"]}.{job["param"]}.grib2'
-  if not path.exists() or path.stat().st_size!=job['bytes']:
-   data=get(job['source'],job['offset'],job['bytes']);assert data[:4]==b'GRIB' and data[-4:]==b'7777'
-   tmp=path.with_suffix('.tmp');tmp.write_bytes(data);tmp.replace(path)
-  job['sha256']=hashlib.sha256(path.read_bytes()).hexdigest();job['cacheFile']=path.name;return path
- with concurrent.futures.ThreadPoolExecutor(max_workers=2) as pool:paths=list(pool.map(download,jobs))
- helper=pathlib.Path(__file__).with_name('extract_global.py');staged=a.output.with_suffix(a.output.suffix+'.validated-stage')
- cmd=[sys.executable,str(helper),'--model','aifs','--run',run,'--temperature']+[str(p) for p,j in zip(paths,jobs) if j['param']=='2t']+['--precipitation']+[str(p) for p,j in zip(paths,jobs) if j['param']=='tp']+['--output',str(staged)]
- subprocess.run(cmd,check=True)
- data=json.loads(staged.read_text());assert len(data['frames'])==8
- for f in data['frames']:
-  m=f['metadata'];lead=m['endStep'];assert lead in LEADS
-  valid=datetime.datetime.strptime(run,'%Y%m%d%H')+datetime.timedelta(hours=lead)
-  assert m['validityDate']==int(valid.strftime('%Y%m%d')) and m['validityTime']==int(valid.strftime('%H%M'))
-  if m['shortName']=='2t':assert m['stepType']=='instant'
-  elif m['shortName']=='tp':assert m['stepType']=='accum'
-  else:raise ValueError('Unexpected AIFS variable')
- data['provenance']=jobs;data['sourceResolution']='Latest official listed run with all four lead indexes and both variables; all eight GRIB messages metadata-validated';tmp=a.output.with_suffix('.tmp');tmp.write_text(json.dumps(data,separators=(',',':'),allow_nan=False));tmp.replace(a.output);staged.unlink()
- print('Verified',run,'8 GRIB messages',sum(j['bytes'] for j in jobs),'bytes; output',a.output,flush=True)
+ helper=pathlib.Path(__file__).with_name('extract_global.py')
+ fine_helper=pathlib.Path(__file__).with_name('build_fine.py')
+ subprocess.run([sys.executable,str(fine_helper),'--run',run,'--cache-dir',str(a.cache_dir),'--output',str(a.output)],check=True)
  if any([a.cfs_run,a.cfs_cache_dir,a.cfs_output]):
   assert all([a.cfs_run,a.cfs_cache_dir,a.cfs_output]),'Supply all three CFS flags'
   subprocess.run([sys.executable,str(helper),'--model','cfs','--run',a.cfs_run,'--temperature',str(a.cfs_cache_dir/f'tmp2m.01.{a.cfs_run}.60days.grib2'),'--precipitation',str(a.cfs_cache_dir/f'prate.01.{a.cfs_run}.60days.grib2'),'--output',str(a.cfs_output)],check=True)
