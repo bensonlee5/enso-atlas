@@ -41,8 +41,11 @@ for(const [name,bytes]of Object.entries(blobs))await status('/api/forecasts/obje
 await status('/api/forecasts/promote',{method:'POST',body:JSON.stringify(m)},412);await status('/api/forecasts/promote',{method:'POST',body:JSON.stringify(m),headers:{'if-none-match':'*'}},200);
 let current=await svc.handle(request('/api/forecasts/manifest',{auth:null}),env),etag=current.headers.get('etag');assert.equal((await current.json()).releaseID,m.releaseID);
 await status('/api/forecasts/promote',{method:'POST',body:JSON.stringify(m),headers:{'if-none-match':'*'}},412);await status('/api/forecasts/promote',{method:'POST',body:JSON.stringify(m),headers:{'if-match':etag}},200);
-const rollback=manifest({...initializations,ensemble:'2026-09-01T00:00:00Z'});await status('/api/forecasts/promote',{method:'POST',body:JSON.stringify(rollback),headers:{'if-match':etag}},409);
-const relabel=manifest({...initializations,ensemble:'2026-10-03T00:00:00Z'});await status('/api/forecasts/promote',{method:'POST',body:JSON.stringify(relabel),headers:{'if-match':etag}},400);
+// Use a new attempt so rollback/relabel checks reach data validation rather than
+// the already-published-attempt conflict guard. Derive dates from the fixture.
+claims.run_id='124';
+const rollback=manifest({...initializations,ensemble:new Date(Date.parse(initializations.ensemble)-86400000).toISOString()});await status('/api/forecasts/promote',{method:'POST',body:JSON.stringify(rollback),headers:{'if-match':etag}},409);
+const relabel=manifest({...initializations,ensemble:new Date(Date.parse(initializations.ensemble)+86400000).toISOString()});await status('/api/forecasts/promote',{method:'POST',body:JSON.stringify(relabel),headers:{'if-match':etag}},400);
 claims.run_id='124';
 const newVerification=Buffer.from(JSON.stringify({...p('verification.json'),storageTest:true})),newObjects={...objects,'verification.json':{sha256:hash(newVerification),bytes:newVerification.length}},newFiles={...files,'verification.json':newObjects['verification.json']};await status('/api/forecasts/objects/'+hash(newVerification)+'/verification.json',{method:'PUT',body:newVerification},201);
 const changed=manifest(initializations,newObjects,newFiles);bucket.failCAS=true;await status('/api/forecasts/promote',{method:'POST',body:JSON.stringify(changed),headers:{'if-match':etag}},412);bucket.failCAS=false;

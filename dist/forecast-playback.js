@@ -13,7 +13,10 @@
   const w=clamp(alpha,0,1);if(w===0)return a;if(w===1)return b;
   return a.map((v,i)=>Number.isFinite(v)&&Number.isFinite(b[i])&&(!nonnegative||(v>=0&&b[i]>=0))?v*(1-w)+b[i]*w:null);
  }
- function advance(time,delta,start,end,speed=1,duration=48000){return clamp(time+clamp(delta,0,250)*(end-start)/duration*speed,start,end)}
+ // RAF may run slowly while full-detail contours are computed. Keep elapsed
+ // visible time instead of dropping every millisecond beyond 250 per frame.
+ // Visibility/pagehide already cancel playback, so hidden time is never resumed.
+ function advance(time,delta,start,end,speed=1,duration=48000){return clamp(time+(Number.isFinite(delta)?Math.max(0,delta):0)*(end-start)/duration*speed,start,end)}
  const math={bracket,blend,advance};root.ForecastTime=math;if(typeof module!=='undefined')module.exports=math;
  if(typeof document==='undefined'||!root.AtlasWorkspace)return;
  const originalGlobalFrame=globalFrame,originalLongData=longData,ids=new WeakMap();let nextId=0;

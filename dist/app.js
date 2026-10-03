@@ -10,6 +10,7 @@ let fahrenheit=true,zoomScale=1,ensoLatest=null,validHour=12,shadeNight=true,sol
 const tempUnit=()=>fahrenheit?'°F':'°C', convertTemp=(n,anomaly=false)=>Number.isFinite(n)?(fahrenheit?n*1.8+(anomaly?0:32):n):n;
 let feedDescription="Dated source snapshot; validated NOAA storage has not been checked yet.";
 let globalMode=false;
+let longProductChosen=false;
 let longMode=false,cfs=null,anomalies=null,ensemble=null,percentile="p50",longWeek=2,longCity=0,longProduct="raw",longVariable="temperature";
 let forecasts=[],world=null,city=0,day=0,variable='temperature_2m_max',lon=-108,lat=29,rotating=false,last=0,snapshot=true,fetched='2026-09-30T12:57:59.578563Z',drag=null;
 const $=id=>document.getElementById(id),date=s=>new Date(s+'T12:00:00Z').toLocaleDateString('en-US',{month:'short',day:'numeric',timeZone:'UTC'}),fmt=n=>Number.isFinite(n)?Math.round(n*10)/10:'—';
@@ -68,7 +69,7 @@ function drawContinuousField(d){
  }
  ctx.drawImage(fieldRaster.canvas,CX-R,CY-R,R*2,R*2);
 }
-$('longCity').onchange=e=>{longCity=Number(e.target.value);renderLong()};$('longWeek').onchange=e=>{longWeek=Number(e.target.value);renderLong()};$('longVariable').onchange=e=>{longVariable=e.target.value;renderLong()};const productWeeks={};$('longProduct').onchange=e=>{productWeeks[longProduct]=longWeek;longProduct=e.target.value;longWeek=productWeeks[longProduct]??longWeek;setupWeeks();renderLong()};
+$('longCity').onchange=e=>{longCity=Number(e.target.value);renderLong()};$('longWeek').onchange=e=>{longWeek=Number(e.target.value);renderLong()};$('longVariable').onchange=e=>{longVariable=e.target.value;renderLong()};const productWeeks={};$('longProduct').onchange=e=>{longProductChosen=true;productWeeks[longProduct]=longWeek;longProduct=e.target.value;longWeek=productWeeks[longProduct]??longWeek;setupWeeks();renderLong()};
 
 let pilotReport=null;
 const metricModels=[['raw_cfsv2','Raw CFSv2'],['train_seasonal_climatology','Seasonal climatology'],['train_region_bias_correction','Regional bias correction'],['ridge_residual','Ridge calibration'],['neural_residual_no_enso','Neural calibration · no ENSO'],['lagged_observation_persistence','Lagged observations']];
@@ -79,7 +80,7 @@ fetch('data/pilot-report.json').then(r=>r.json()).then(r=>{pilotReport=r;renderM
 function renderEnso(){if(!ensoLatest)return;const o=ensoLatest,v=convertTemp(o.nino34.anomaly,true);document.querySelector('.signal').innerHTML='Niño 3.4 <b>'+(v>=0?'+':'')+fmt(v)+tempUnit()+'</b><small>'+date(o.date)+' weekly SST anomaly</small>'}
 
 $('percentile').onchange=e=>{if(!['p1','p5','p10','p50','p90','p95','p99'].includes(e.target.value)||!longFrames()[longWeek]?.[longVariable]?.[e.target.value])return;percentile=e.target.value;renderLong()};
-const ensembleLoad=fetch('data/ensemble-percentiles.json').then(r=>{if(!r.ok)throw Error('Ensemble unavailable');return r.json()}).then(e=>{ensemble=e;const option=document.createElement('option');option.value='ensemble';option.textContent='Worldwide · '+e.memberCount+'-member ensemble';$('longProduct').appendChild(option);syncPercentileOptions();longProduct='ensemble';$('longProduct').value='ensemble';setupWeeks();if(longMode)renderLong()}).catch(()=>{});
+const ensembleLoad=fetch('data/ensemble-percentiles.json').then(r=>{if(!r.ok)throw Error('Ensemble unavailable');return r.json()}).then(e=>{ensemble=e;const option=document.createElement('option');option.value='ensemble';option.textContent='Worldwide · '+e.memberCount+'-member ensemble';$('longProduct').appendChild(option);syncPercentileOptions();if(!longProductChosen){longProduct='ensemble';$('longProduct').value='ensemble';}setupWeeks();if(longMode)renderLong()}).catch(()=>{});
 
 function forecastValue(f,k,i){if(!f)return null;if(k==='cloud_cover'){const target=f.daily.time[i]+'T'+String(validHour).padStart(2,'0')+':00',j=f.hourly?.time?.indexOf(target);return j>=0?f.hourly.cloud_cover[j]:null}return f.daily?.[k]?.[i]??null}
 $('validHour').innerHTML=Array.from({length:24},(_,i)=>`<option value="${i}">${String(i).padStart(2,'0')}:00 UTC</option>`).join('');$('validHour').value=validHour;$('validHour').onchange=e=>{validHour=Number(e.target.value);render()};$('dayNight').onclick=()=>{shadeNight=!shadeNight;$('dayNight').setAttribute('aria-pressed',String(shadeNight));draw()};
