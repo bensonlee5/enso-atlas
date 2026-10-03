@@ -7,3 +7,5 @@
 .forecast-playback .contour-precision-warning{color:#ffd0a3;border-left:3px solid #d49a68;padding:8px 12px;background:#39281d;font-size:14px}
 
 .playback-top #forecastRestart{min-width:80px;border-color:#456579;background:#122b3a;color:#c9dce7}@media(max-width:600px){.playback-top #forecastPlay{grid-column:1;min-width:0}.playback-top #forecastRestart{grid-column:2;min-width:0}}
+
+.playback-top label:has(#forecastPlaybackSpeed){flex-direction:row;align-items:center;gap:8px}.playback-top #forecastPlaybackSpeed{min-width:112px}

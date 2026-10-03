@@ -23,7 +23,7 @@
  fineShortcut.onclick=()=>{AtlasPlayback.stop();$('globalModel').value='aifs';$('globalView').value='forecast';setHorizon('global');$('globalToday').click();};
  const playbackOptions=document.createElement('details');playbackOptions.className='playback-options';playbackOptions.innerHTML='<summary>Playback options</summary><div class="playback-options-content"></div>';
  const top=playback.querySelector('.playback-top'),optionsBody=playbackOptions.lastElementChild;
- for(const label of [...top.querySelectorAll('label')])if(!label.querySelector('#forecastPlaybackAxis'))optionsBody.append(label);
+ for(const label of [...top.querySelectorAll('label')])if(!label.querySelector('#forecastPlaybackAxis,#forecastPlaybackSpeed'))optionsBody.append(label);
  top.append(playbackOptions);
  const method=playback.querySelector('details:not(.playback-options)');method.prepend($('forecastPlaybackNote'));
  for(const [id,label] of [['globalPointForm','Coordinates & map point'],['modelComparison','Compare model snapshots']]){const element=$(id),details=document.createElement('details');details.className='secondary-forecast-detail';const summary=document.createElement('summary');summary.textContent=label;details.append(summary);element.before(details);details.append(element);}

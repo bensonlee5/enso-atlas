@@ -67,11 +67,11 @@ function adaptiveContourSegments(coords,values,levels,options={}){
  const cases={1:[[3,0]],2:[[0,1]],3:[[3,1]],4:[[1,2]],6:[[0,2]],7:[[3,2]],8:[[2,3]],9:[[2,0]],11:[[1,2]],12:[[1,3]],13:[[0,1]],14:[[3,0]]},edges=[[0,1],[1,2],[2,3],[3,0]],corners=[[0,0],[1,0],[1,1],[0,1]];
  for(const cell of topology.cells){
   if(view){const phi=(cell.y+cell.dy/2)*rad,center=view.latitude*rad,delta=(cell.x+cell.dx/2-view.longitude)*rad,dot=Math.sin(phi)*Math.sin(center)+Math.cos(phi)*Math.cos(center)*Math.cos(delta),margin=(Math.abs(cell.dx)+Math.abs(cell.dy))/2+(view.marginDegrees||0);if(margin<90&&dot< -Math.sin(margin*rad))continue;}
-  const v=cell.indices.map(i=>values[i]);if(!v.every(Number.isFinite))continue;
-  const min=Math.min(...v),max=Math.max(...v);if(min===max)continue;
+  const ids=cell.indices,v=[values[ids[0]],values[ids[1]],values[ids[2]],values[ids[3]]];if(!Number.isFinite(v[0])||!Number.isFinite(v[1])||!Number.isFinite(v[2])||!Number.isFinite(v[3]))continue;
+  const min=Math.min(v[0],v[1],v[2],v[3]),max=Math.max(v[0],v[1],v[2],v[3]);if(min===max)continue;const b=v[1]-v[0],c=v[3]-v[0],d=v[2]-v[1]-v[3]+v[0];
   for(let k=lower(min);k<sorted.length&&sorted[k]<=max;k++){
-   const level=sorted[k],a=v[0]-level,b=v[1]-v[0],c=v[3]-v[0],d=v[2]-v[1]-v[3]+v[0],q=a*d-b*c,scale=Math.max(1,...v.map(n=>Math.abs(n-level))),eps=Number.EPSILON*scale*scale*32;
-   const code=v.reduce((s,n,i)=>s+(n>=level?1<<i:0),0);
+   const level=sorted[k],a=v[0]-level,q=a*d-b*c,scale=Math.max(1,Math.abs(v[0]-level),Math.abs(v[1]-level),Math.abs(v[2]-level),Math.abs(v[3]-level));
+   const code=(v[0]>=level?1:0)+(v[1]>=level?2:0)+(v[2]>=level?4:0)+(v[3]>=level?8:0);
    const crossing=edge=>{const [i,j]=edges[edge],t=(level-v[i])/(v[j]-v[i]);return [corners[i][0]+t*(corners[j][0]-corners[i][0]),corners[i][1]+t*(corners[j][1]-corners[i][1])]};
    const emit=(p,z)=>{if(quality.segments>=maxSegments){quality.withheld++;quality.segmentLimit++;return}const aa=[cell.x+p[0]*cell.dx,cell.y+p[1]*cell.dy],bb=[cell.x+z[0]*cell.dx,cell.y+z[1]*cell.dy];if(Math.hypot(aa[0]-bb[0],aa[1]-bb[1])<1e-10)return;if(packed)buckets[k].push(level,aa[0],aa[1],bb[0],bb[1]);else buckets[k].push({level,a:aa,b:bb});quality.segments++;};
    function refine(p,z,depth){
@@ -82,10 +82,10 @@ function adaptiveContourSegments(coords,values,levels,options={}){
     if(scalarError>1e-13*scale){
      const horizontal=Math.abs(du*cell.dx)>=Math.abs(dv*cell.dy),axis=horizontal?0:1,other=1-axis,coefficient=horizontal?b:c,denominator=horizontal?c:b,u0=p[axis],u1=z[axis],slope=(z[other]-p[other])/(u1-u0),solve=u=>-(a+coefficient*u)/(denominator+d*u),um=(u0+u1)/2;
      mid=horizontal?[um,solve(um)]:[solve(um),um];
-     if(!mid.every(Number.isFinite)||mid.some(n=>n< -1e-8||n>1+1e-8)){quality.withheld++;quality.numericalFailure++;return}
-     const deviationAt=u=>Math.abs(solve(u)-(p[other]+slope*(u-u0))),candidates=[um];
-     if(d!==0&&q/slope>0){const root=Math.sqrt(q/slope);for(const den of [root,-root]){const u=(den-denominator)/d;if(u>Math.min(u0,u1)&&u<Math.max(u0,u1))candidates.push(u)}}
-     deviation=Math.max(...candidates.map(deviationAt))*(horizontal?cell.dy:cell.dx);
+     if(!Number.isFinite(mid[0])||!Number.isFinite(mid[1])||mid[0]< -1e-8||mid[0]>1+1e-8||mid[1]< -1e-8||mid[1]>1+1e-8){quality.withheld++;quality.numericalFailure++;return}
+     const deviationAt=u=>Math.abs(solve(u)-(p[other]+slope*(u-u0)));let maximumDeviation=deviationAt(um);
+     if(d!==0&&q/slope>0){const root=Math.sqrt(q/slope),lo=Math.min(u0,u1),hi=Math.max(u0,u1),up=(root-denominator)/d,un=(-root-denominator)/d;if(up>lo&&up<hi)maximumDeviation=Math.max(maximumDeviation,deviationAt(up));if(un>lo&&un<hi)maximumDeviation=Math.max(maximumDeviation,deviationAt(un));}
+     deviation=maximumDeviation*(horizontal?cell.dy:cell.dx);
     }
     const projectionError=radius*rad*deviation+projectionChord;
     if(scalarError<=scalarTolerance&&projectionError<=pixelTolerance){emit(p,z);return}
