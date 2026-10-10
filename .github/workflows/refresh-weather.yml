@@ -6,7 +6,7 @@ on:
     - cron: '17 3,9,21 * * *'
   push:
     branches: [main]
-    paths: ['ingestion/**', '.github/workflows/refresh-weather.yml']
+    paths: ['ingestion/**', 'tests/public-data-test.cjs', 'dist/forecast-schema.js', 'dist/public-data.js', 'dist/aifs-fine.js', '.github/workflows/refresh-weather.yml']
   workflow_dispatch:
     inputs:
       mode:
