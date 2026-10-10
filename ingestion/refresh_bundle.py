@@ -30,22 +30,44 @@ def copy_previous(previous,stage):
 def run(script,*args,timeout=900):
  env={k:v for k,v in os.environ.items() if not (k.startswith('ACTIONS_') or k in ('GITHUB_TOKEN','GH_TOKEN'))}
  subprocess.run([sys.executable,str(ROOT/'ingestion'/script),*map(str,args)],check=True,timeout=timeout,env=env)
+def refresh_product(stage,names,script,*args,timeout=900):
+ previous={name:(stage/name).read_bytes() for name in names if (stage/name).exists()}
+ error=None
+ try:
+  run(script,*args,timeout=timeout)
+  for name in names:
+   if name.endswith('.json') and not isinstance(json.loads((stage/name).read_text()),dict):raise ValueError('Invalid product object')
+ except (subprocess.SubprocessError,OSError,ValueError) as ex:
+  error=type(ex).__name__
+  if len(previous)!=len(names):raise RuntimeError('Product failed without a complete last-good copy: '+','.join(names)) from ex
+  for name,body in previous.items():(stage/name).write_bytes(body)
+  print('Retained last-good product:',','.join(names),error,flush=True)
+ for name in names:
+  if not name.endswith('.json'):continue
+  path=stage/name;data=json.loads(path.read_text())
+  state='retained' if error else 'checked'
+  if data.get('refreshStatus',{}).get('state')==state:continue
+  data['refreshStatus']={'stateSince':dt.datetime.now(dt.timezone.utc).isoformat(),'state':'retained' if error else 'checked','message':'Latest refresh failed; last validated issuance retained' if error else 'Source check completed; initialization may be unchanged'}
+  path.write_text(json.dumps(data,separators=(',',':'),allow_nan=False))
+ return error is None
 def refresh(output,mode):
  with tempfile.TemporaryDirectory(prefix='enso-noaa-') as tmp:
   tmp=pathlib.Path(tmp);stage=tmp/'data';stage.mkdir();copy_previous(output,stage)
   if mode=='fast' and not all((stage/n).exists() for n in (*FILES,ARTIFACT,'verification.json')):raise ValueError('Fast refresh requires an established complete feed; run a daily bootstrap first')
-  run('global/refresh_global.py','--cache-dir',tmp/'aifs-cache','--output',stage/'aifs-global-snapshots.json','--previous',output/'aifs-global-snapshots.json',timeout=450)
-  run('refresh.py','--output',stage,'--previous',output,'--global-output',stage/'cfs-global-60days.json','--compare-with',stage/'aifs-global-snapshots.json')
+  refresh_product(stage,['aifs-global-snapshots.json'],'global/refresh_global.py','--cache-dir',tmp/'aifs-cache','--output',stage/'aifs-global-snapshots.json','--previous',output/'aifs-global-snapshots.json',timeout=600)
+  refresh_product(stage,['cfs-weekly-raw-60days.json','cfs-global-60days.json'],'refresh.py','--product','raw','--output',stage,'--previous',output,'--global-output',stage/'cfs-global-60days.json','--compare-with',stage/'aifs-global-snapshots.json')
+  refresh_product(stage,['cfs-weekly-anomalies.json'],'refresh.py','--product','anomaly','--output',stage,'--previous',output)
+  refresh_product(stage,['enso-observations.json'],'refresh.py','--product','enso','--output',stage,'--previous',output)
   if mode=='daily':
    cache=tmp/'cfs-cache'
-   run('ensemble/retrieve_ensemble.py','--run','latest','--lag-days','4','--days','60','--cache-dir',cache,'--output',stage/'ensemble-percentiles.json','--previous',output/'ensemble-percentiles.json','--locations-file',stage/'cfs-weekly-raw-60days.json','--reference-date',dt.datetime.now(dt.timezone.utc).date().isoformat(),timeout=1500)
+   refresh_product(stage,['ensemble-percentiles.json',ARTIFACT],'ensemble/retrieve_ensemble.py','--run','latest','--lag-days','4','--days','60','--cache-dir',cache,'--output',stage/'ensemble-percentiles.json','--previous',output/'ensemble-percentiles.json','--locations-file',stage/'cfs-weekly-raw-60days.json','--reference-date',dt.datetime.now(dt.timezone.utc).date().isoformat(),timeout=1500)
    ensemble=json.loads((stage/'ensemble-percentiles.json').read_text())
    previous=json.loads((output/'ensemble-percentiles.json').read_text()) if (output/'ensemble-percentiles.json').exists() else None
    if previous:archive_product(output/'ensemble-percentiles.json',stage/'archive')
    archive_product(stage/'ensemble-percentiles.json',stage/'archive')
    verification=stage/'verification.json';current=json.loads(verification.read_text()) if verification.exists() else {}
    if current.get('generatedAt','')[:10]!=dt.datetime.now(dt.timezone.utc).date().isoformat() or not previous or previous.get('run')!=ensemble['run']:
-    run('verify_forecasts.py','--archive-dir',stage/'archive','--output',verification,timeout=600)
+    refresh_product(stage,['verification.json'],'verify_forecasts.py','--archive-dir',stage/'archive','--output',verification,timeout=600)
   manifest=manifest_for(stage)
   old=json.loads((output/'refresh-manifest.json').read_text()) if (output/'refresh-manifest.json').exists() else None
   if old and old.get('files')==manifest['files'] and old.get('initializations')==manifest['initializations']:manifest['generatedAt']=old['generatedAt']

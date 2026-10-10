@@ -10,6 +10,8 @@
  function nearestTime(times,instant){let index=-1,distance=Infinity;times.forEach((time,i)=>{const difference=Math.abs(Date.parse(time.endsWith('Z')?time:time+'Z')-instant);if(difference<distance){distance=difference;index=i}});return index;}
  function freshness(time,now=Date.now()){const elapsed=now-Date.parse(time);if(!Number.isFinite(elapsed))return 'Time unavailable';if(elapsed<0)return 'Future source timestamp';const hours=Math.floor(elapsed/3600000);return hours<1?'less than 1 hour old':hours<48?hours+' hours old':Math.floor(hours/24)+' days old';}
  function utc(time){const value=new Date(time);return Number.isFinite(value.getTime())?value.toISOString().slice(0,16).replace('T',' ')+' UTC':'Not provided';}
- root.AtlasBriefing={days,nearestTime,freshness,utc};
+ function zone(f){try{const z=!f?.timezone||f.timezone==='GMT'?'UTC':f.timezone;new Intl.DateTimeFormat('en-US',{timeZone:z});return z}catch{return 'UTC'}}
+ function localDate(now=Date.now(),timeZone='UTC'){const p=new Intl.DateTimeFormat('en-CA',{timeZone,year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(new Date(now)),get=k=>p.find(x=>x.type===k).value;return get('year')+'-'+get('month')+'-'+get('day')}
+ root.AtlasBriefing={days,nearestTime,freshness,utc,zone,localDate};
  if(typeof module!=='undefined')module.exports=root.AtlasBriefing;
 })(typeof globalThis==='undefined'?this:globalThis);

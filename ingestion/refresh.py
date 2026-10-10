@@ -93,19 +93,22 @@ def enso():
  return {'source':url,'units':'°C','baseline':'1991–2020','kind':'Observed weekly sea-surface temperature indices; not ONI','observations':rows[-104:]}
 
 def main():
- p=argparse.ArgumentParser();p.add_argument('--output',type=pathlib.Path,default=pathlib.Path(__file__).parents[1]/'dist/data');p.add_argument('--previous',type=pathlib.Path,help='Hash-verified previous bundle: skip unchanged raw/anomaly issuance');p.add_argument('--global-output',type=pathlib.Path);p.add_argument('--compare-with',type=pathlib.Path);args=p.parse_args();now=dt.datetime.now(UTC)
+ p=argparse.ArgumentParser();p.add_argument('--output',type=pathlib.Path,default=pathlib.Path(__file__).parents[1]/'dist/data');p.add_argument('--previous',type=pathlib.Path,help='Hash-verified previous bundle: skip unchanged raw/anomaly issuance');p.add_argument('--global-output',type=pathlib.Path);p.add_argument('--compare-with',type=pathlib.Path);p.add_argument('--product',choices=('raw','anomaly','enso'));args=p.parse_args();now=dt.datetime.now(UTC)
  def previous(name):
   path=args.previous/name if args.previous else None
   return json.loads(path.read_text()) if path and path.exists() else None
  with tempfile.TemporaryDirectory() as temp:
-  temp=pathlib.Path(temp);products={'cfs-weekly-raw-60days.json':raw(temp,previous('cfs-weekly-raw-60days.json'),args.global_output,args.compare_with),'cfs-weekly-anomalies.json':anomaly(temp,previous('cfs-weekly-anomalies.json')),'enso-observations.json':enso()}
-  if now-dt.datetime.fromisoformat(products['cfs-weekly-raw-60days.json']['run'].replace('Z','+00:00'))>dt.timedelta(days=4):raise ValueError('Latest complete CFS run is over four days old')
-  if now.date()-dt.date.fromisoformat(products['cfs-weekly-anomalies.json']['initialDate'])>dt.timedelta(days=14):raise ValueError('Weekly anomaly product is over fourteen days old')
-  if now.date()-dt.date.fromisoformat(products['enso-observations.json']['observations'][-1]['date'])>dt.timedelta(days=21):raise ValueError('ENSO observations are over21days old')
+  temp=pathlib.Path(temp);products={}
+  if args.product in (None,'raw'):products['cfs-weekly-raw-60days.json']=raw(temp,previous('cfs-weekly-raw-60days.json'),args.global_output,args.compare_with)
+  if args.product in (None,'anomaly'):products['cfs-weekly-anomalies.json']=anomaly(temp,previous('cfs-weekly-anomalies.json'))
+  if args.product in (None,'enso'):products['enso-observations.json']=enso()
+  if 'cfs-weekly-raw-60days.json' in products and now-dt.datetime.fromisoformat(products['cfs-weekly-raw-60days.json']['run'].replace('Z','+00:00'))>dt.timedelta(days=4):raise ValueError('Latest complete CFS run is over four days old')
+  if 'cfs-weekly-anomalies.json' in products and now.date()-dt.date.fromisoformat(products['cfs-weekly-anomalies.json']['initialDate'])>dt.timedelta(days=14):raise ValueError('Weekly anomaly product is over fourteen days old')
+  if 'enso-observations.json' in products and now.date()-dt.date.fromisoformat(products['enso-observations.json']['observations'][-1]['date'])>dt.timedelta(days=21):raise ValueError('ENSO observations are over21days old')
   # Validate every product before replacing. Each file uses atomic rename. Deployment
   # is an external all-files transaction and must only occur after successful exit.
   args.output.mkdir(parents=True,exist_ok=True)
   for name,data in products.items():
    dest=args.output/name;stage=dest.with_suffix('.json.tmp');stage.write_text(json.dumps(data,separators=(',',':'),allow_nan=False));os.replace(stage,dest)
-  print(json.dumps({'status':'success','refreshedAt':now.isoformat(),'cfsRun':products['cfs-weekly-raw-60days.json']['run'],'anomalyInitialDate':products['cfs-weekly-anomalies.json']['initialDate'],'ensoDate':products['enso-observations.json']['observations'][-1]['date'],'files':list(products)}))
+  print(json.dumps({'status':'success','refreshedAt':now.isoformat(),'files':list(products)}))
 if __name__=='__main__':main()

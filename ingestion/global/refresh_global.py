@@ -4,26 +4,46 @@ Dependencies: numpy, eccodes; extract_global.py adjacent. No secrets/services.
 python refresh_global.py --cache-dir ./weather-cache --output ./aifs-global-snapshots.json
 Optionally reuse CFS cache: --cfs-run YYYYMMDDHH --cfs-cache-dir ./ensemble-cache --cfs-output ./cfs-global-60days.json
 """
+import time, urllib.error, email.utils
 import argparse,concurrent.futures,datetime,hashlib,json,pathlib,re,subprocess,sys,urllib.request,tempfile
 BASE='https://data.ecmwf.int/forecasts/'
 LEADS=(24,168,336,360)
 def get(url,start=None,length=None):
  headers={'User-Agent':'ENSOAtlas-public-weather-refresh/1.0'}
  if start is not None:headers['Range']=f'bytes={start}-{start+length-1}'
- with urllib.request.urlopen(urllib.request.Request(url,headers=headers),timeout=90) as r:
-  if start is not None:
-   assert r.status==206,'Upstream ignored Range; refusing full GRIB'
-   assert r.headers.get('Content-Range','').startswith(f'bytes {start}-{start+length-1}/'),'Wrong Range'
-  limit=length if length is not None else 2000000
-  data=r.read(limit+1);assert len(data)<=limit,'Oversized upstream response'
-  if length is not None:assert len(data)==length,'Truncated GRIB message'
-  return data
+ for attempt in range(3):
+  try:
+   with urllib.request.urlopen(urllib.request.Request(url,headers=headers),timeout=90) as r:
+    if start is not None:
+     assert r.status==206,'Upstream ignored Range; refusing full GRIB'
+     assert r.headers.get('Content-Range','').startswith(f'bytes {start}-{start+length-1}/'),'Wrong Range'
+    limit=length if length is not None else 2000000
+    data=r.read(limit+1);assert len(data)<=limit,'Oversized upstream response'
+    if length is not None:assert len(data)==length,'Truncated GRIB message'
+    return data
+  except urllib.error.HTTPError as ex:
+   if ex.code not in (429,500,502,503,504) or attempt==2:raise
+   retry=ex.headers.get('Retry-After','')
+   try: delay=float(retry)
+   except ValueError:
+    try:delay=(email.utils.parsedate_to_datetime(retry)-datetime.datetime.now(datetime.timezone.utc)).total_seconds()
+    except (ValueError,TypeError):delay=30*(attempt+1)
+   # Never shorten a provider-requested cooldown. Defer this product if too long.
+   if delay>120:raise
+   time.sleep(max(30*(attempt+1),delay))
+  except (TimeoutError,urllib.error.URLError):
+   if attempt==2:raise
+   time.sleep(30*(attempt+1))
+
 
 def resolve():
  html=get(BASE).decode();dates=sorted(set(re.findall(r'/forecasts/(20\d{6})/',html)),reverse=True)
  assert dates,'No dates found in official ECMWF listing'
  for date in dates[:3]:
   try:listing=get(BASE+date+'/').decode()
+  except urllib.error.HTTPError as ex:
+   if ex.code==429:raise
+   continue
   except Exception:continue
   hours=sorted(set(re.findall(r'(?<!\d)(00|06|12|18)z(?:/|["\'])',listing)),reverse=True)
   for hour in hours:
@@ -37,7 +57,9 @@ def resolve():
       row=chosen[0];offset=int(row['_offset']);length=int(row['_length']);assert 0<length<10000000 and offset>=0
       jobs.append({'run':run,'lead':lead,'param':var,'source':stem+'.grib2','indexSource':stem+'.index','offset':offset,'bytes':length})
     print('Latest complete indexed AIFS run:',run,flush=True);return run,jobs
-   except Exception as ex:print('Skipping incomplete run',run,str(ex)[:120],file=sys.stderr,flush=True)
+   except Exception as ex:
+    if isinstance(ex,urllib.error.HTTPError) and ex.code==429:raise
+    print('Skipping incomplete run',run,str(ex)[:120],file=sys.stderr,flush=True)
  raise RuntimeError('No complete AIFS run among latest 3 listed dates')
 
 def main():

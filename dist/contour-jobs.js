@@ -1,0 +1,10 @@
+'use strict';
+/* Bounded worker queue; never show geometry from a different scalar field. */
+(function(root){
+ let worker=null,disabled=false,active=null,queued=null,serial=0,workerCoords=null,latest=null;
+ const cache=[],metrics={submitted:0,completed:0,discarded:0,lastComputeMs:0};
+ function start(job){active=job;metrics.submitted++;const coords=workerCoords===job.coords?undefined:job.coords;workerCoords=job.coords;worker.postMessage({id:job.id,key:job.key,coords,values:job.values,levels:job.levels,options:job.options});}
+ function init(){if(worker||disabled)return !!worker;if(typeof Worker==='undefined'){disabled=true;return false}try{worker=new Worker('contour-worker.js');worker.onmessage=({data})=>{if(!active||data.id!==active.id)return;const job=active;active=null;if(data.error){disabled=true;worker.terminate();worker=null;queued=null;root.dispatchEvent(new Event('atlas-contours-ready'));return}metrics.completed++;metrics.lastComputeMs=data.milliseconds;cache.unshift({...job,segments:data.segments});while(cache.length>3)cache.pop();if(latest?.id!==job.id)metrics.discarded++;if(queued){const next=queued;queued=null;start(next)}root.dispatchEvent(new Event('atlas-contours-ready'));};worker.onerror=()=>{disabled=true;worker?.terminate();worker=null;active=queued=null;root.dispatchEvent(new Event('atlas-contours-ready'));};return true}catch{disabled=true;return false}}
+ function get(key,coords,values,levels,options){if(!init())return {segments:adaptiveContourSegments(coords,values,levels,options),sync:true};const hit=cache.find(x=>x.key===key&&x.values===values);if(hit){latest=hit;return hit}if(active?.key===key&&active.values===values){latest=active;return null}if(queued?.key===key&&queued.values===values){latest=queued;return null}const job={id:++serial,key,coords,values,levels,options};latest=job;if(active)queued=job;else start(job);return null;}
+ root.AtlasContours={get,get busy(){return !!active||!!queued},metrics};
+})(typeof globalThis==='undefined'?this:globalThis);

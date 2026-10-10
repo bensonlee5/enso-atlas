@@ -9,6 +9,7 @@ if os.environ.get('ECCODES_PYTHON_PATH'):
 import eccodes as e
 import numpy as np
 from transport import separate_member_means, validate_member_artifact
+from native_points import CITIES, nearest_points
 from quantiles import member_quantiles, QUANTILE_KEYS, QUANTILE_LEVELS, align_valid_window
 ROOT=pathlib.Path(__file__).parent
 P=argparse.ArgumentParser();P.add_argument('--run',default='latest');P.add_argument('--days',type=int,default=60);P.add_argument('--cache-dir',type=pathlib.Path,default=pathlib.Path(tempfile.gettempdir())/'enso-atlas-cfs-cache');P.add_argument('--output',type=pathlib.Path,default=ROOT/'cfs-weekly-ensemble-percentiles.json');P.add_argument('--previous',type=pathlib.Path);P.add_argument('--locations-file',type=pathlib.Path);P.add_argument('--reference-date',help='Require this UTC reference date (YYYY-MM-DD), fail rather than reuse yesterday');P.add_argument('--workers',type=int,default=2);P.add_argument('--lag-days',type=int,default=4,choices=range(1,5));A=P.parse_args()
@@ -85,7 +86,7 @@ def fetch_decode(pair):
  end=int(rows[count].split(':')[1])-1
  if not path.exists():path.write_bytes(get(url,0,end))
  assert path.stat().st_size==end+1
- frames=[];metas=[];coordinates=None;mask=None
+ frames=[];native_frames=[];metas=[];coordinates=None;mask=None;native_indices=None;native_points=None
  with path.open('rb') as f:
   while (g:=e.codes_grib_new_from_file(f)):
    keys=['shortName','units','dataDate','dataTime','stepRange','stepType','startStep','endStep','validityDate','validityTime','productDefinitionTemplateNumber']
@@ -101,13 +102,17 @@ def fetch_decode(pair):
    assert meta['validityDate']==int(valid.strftime('%Y%m%d')) and meta['validityTime']==int(valid.strftime('%H%M'))
    if mask is None:
     lats=e.codes_get_array(g,'latitudes');lons=(e.codes_get_array(g,'longitudes')+180)%360-180
+    native_indices,native_points=nearest_points(lats,lons,CITIES)
     la=np.unique(lats);lo=np.unique(lons)
     # Every fourth native Gaussian row/longitude: a complete periodic globe,
     # not regional samples extended into unsupported locations. Retain edge rows.
     latset=np.unique(np.r_[la[::4],la[-1]])
     lonset=lo[::4]
     mask=np.isin(lats,latset)&np.isin(lons,lonset);coordinates=np.column_stack([lats[mask],lons[mask]]).round(4).tolist()
-   v=e.codes_get_values(g)[mask]
+   all_values=e.codes_get_values(g)
+   native=all_values[native_indices]
+   native_frames.append(native-273.15 if var=='tmp2m' else native*86400)
+   v=all_values[mask]
    if var=='tmp2m':assert meta['units']=='K';v=v-273.15
    else:assert meta['units']=='kg m**-2 s**-1';v=v*86400
    assert np.isfinite(v).all()
@@ -121,11 +126,13 @@ def fetch_decode(pair):
  boundaries=[(i*28,(i+1)*28) for i in range(8)]+[(224,N)]
  period_means=np.array([values[a:b].mean(axis=0).round(6) for a,b in boundaries])
  print('Decoded',source_run,member,var,values.shape,'->',period_means.shape,flush=True)
- return source_run+'/'+member,var,period_means,coordinates,provenance
+ native_values=align_valid_window(native_frames,source_init,INIT,N)
+ native_means=np.array([native_values[a:b].mean(axis=0).round(6) for a,b in boundaries])
+ return source_run+'/'+member,var,period_means,coordinates,provenance,native_means,native_points
 if __name__=='__main__':
  if A.previous and A.previous.exists():
   previous=json.loads(A.previous.read_text())
-  if previous.get('schemaVersion')==3 and previous.get('coverage')=='global' and previous.get('lagDays')==A.lag_days and dt.datetime.fromisoformat(previous['run'].replace('Z','+00:00'))==INIT:
+  if previous.get('nativePointForecasts',{}).get('schemaVersion')==1 and previous.get('schemaVersion')==3 and previous.get('coverage')=='global' and previous.get('lagDays')==A.lag_days and dt.datetime.fromisoformat(previous['run'].replace('Z','+00:00'))==INIT:
    validate_member_artifact(previous,A.previous.parent)
    A.output.parent.mkdir(parents=True,exist_ok=True)
    A.output.write_bytes(A.previous.read_bytes())
@@ -136,8 +143,8 @@ if __name__=='__main__':
  # ecCodes decoding runs in separate processes for thread safety.
  with concurrent.futures.ProcessPoolExecutor(max_workers=max(1,min(2,A.workers))) as pool:results=list(pool.map(fetch_decode,pairs))
  coords=results[0][3];assert 4000<=len(coords)<6000 and all(r[3]==coords for r in results)
- data={(m,v):a for m,v,a,c,p in results};members=[run+'/'+m for run in runs for m in ['01','02','03','04']]
- out={'schemaVersion':3,'coverage':'global','sampling':{'nativeGrid':'CFSv2 Gaussian 384 × 190','nativeStride':4,'displaySpacingDegrees':3.8,'longitudePeriodic':True,'latitudeBounds':[min(c[0] for c in coords),max(c[0] for c in coords)],'polarCaps':'No extrapolation beyond outermost native Gaussian latitude'},'memberMeanDecimalPlaces':6,'availableQuantiles':list(QUANTILE_KEYS),'quantileLevels':list(QUANTILE_LEVELS),'model':'NOAA CFSv2','run':INIT.isoformat(),'memberIDs':members,'memberCount':len(members),'initializationRange':[(INIT-dt.timedelta(days=A.lag_days-1)).isoformat(),INIT.isoformat()],'laggedEnsemble':A.lag_days>1,'lagDays':A.lag_days,'members':[{'id':run+'/'+m,'member':m,'initialization':dt.datetime.strptime(run,'%Y%m%d%H').replace(tzinfo=dt.timezone.utc).isoformat()} for run in runs for m in ['01','02','03','04']],'kind':f'{len(members)}-member lagged empirical model quantiles; uncalibrated, not event probabilities or certainty bounds','quantileMethod':'NumPy linear quantiles (Hyndman–Fan type7), q=[0.01,0.05,0.1,0.5,0.9,0.95,0.99], applied across valid-time-aligned member temporal averages. Equal member weights. P50 is the median of sorted member means.','method':'Each member is averaged over 28 instantaneous six-hourly forecast samples per week, THEN quantiles are computed across members. Precipitation is mean sampled instantaneous rate converted to mm/day; not a validated weekly accumulated amount. 00Z members01–04 across consecutive initialization days; older runs are cropped to the exact same 240 six-hour valid instants before any weekly averaging. This is a lagged ensemble: initial conditions and forecast lead ages differ and members are dependent. No bias correction or climatological calibration.','limitations':['A small correlated lagged ensemble cannot resolve rare-event probabilities. P1/P5/P95/P99 are empirical interpolations, not calibrated tail probabilities or certainty bounds; increasing member count does not remove model bias or dependence','Weekly averages based on6-hourly samples, not continuous temporal integration','Worldwide native-model points sampled every fourth grid row/column (~3.8 degrees); display interpolation adds no model resolution and is not an exact city forecast','All longitudes and both hemispheres, including oceans; unsampled polar caps stay empty','Weeks1–8 cover56days; final4days are separately supplied, not a full ninth week'],'units':{'temperature':'°C','precipitationRate':'mm/day'},'gridCoordinates':coords,'sources':[p['source'] for *_,p in results],'provenance':[p for *_,p in results],'weeks':[]}
+ data={(r[0],r[1]):r[2] for r in results};members=[run+'/'+m for run in runs for m in ['01','02','03','04']]
+ out={'schemaVersion':3,'coverage':'global','sampling':{'nativeGrid':'CFSv2 Gaussian 384 × 190','nativeStride':4,'displaySpacingDegrees':3.8,'longitudePeriodic':True,'latitudeBounds':[min(c[0] for c in coords),max(c[0] for c in coords)],'polarCaps':'No extrapolation beyond outermost native Gaussian latitude'},'memberMeanDecimalPlaces':6,'availableQuantiles':list(QUANTILE_KEYS),'quantileLevels':list(QUANTILE_LEVELS),'model':'NOAA CFSv2','run':INIT.isoformat(),'memberIDs':members,'memberCount':len(members),'initializationRange':[(INIT-dt.timedelta(days=A.lag_days-1)).isoformat(),INIT.isoformat()],'laggedEnsemble':A.lag_days>1,'lagDays':A.lag_days,'members':[{'id':run+'/'+m,'member':m,'initialization':dt.datetime.strptime(run,'%Y%m%d%H').replace(tzinfo=dt.timezone.utc).isoformat()} for run in runs for m in ['01','02','03','04']],'kind':f'{len(members)}-member lagged empirical model quantiles; uncalibrated, not event probabilities or certainty bounds','quantileMethod':'NumPy linear quantiles (Hyndman–Fan type7), q=[0.01,0.05,0.1,0.5,0.9,0.95,0.99], applied across valid-time-aligned member temporal averages. Equal member weights. P50 is the median of sorted member means.','method':'Each member is averaged over 28 instantaneous six-hourly forecast samples per week, THEN quantiles are computed across members. Precipitation is mean sampled instantaneous rate converted to mm/day; not a validated weekly accumulated amount. 00Z members01–04 across consecutive initialization days; older runs are cropped to the exact same 240 six-hour valid instants before any weekly averaging. This is a lagged ensemble: initial conditions and forecast lead ages differ and members are dependent. No bias correction or climatological calibration.','limitations':['A small correlated lagged ensemble cannot resolve rare-event probabilities. P1/P5/P95/P99 are empirical interpolations, not calibrated tail probabilities or certainty bounds; increasing member count does not remove model bias or dependence','Weekly averages based on6-hourly samples, not continuous temporal integration','Worldwide native-model points sampled every fourth grid row/column (~3.8 degrees); display interpolation adds no model resolution and is not an exact city forecast','All longitudes and both hemispheres, including oceans; unsampled polar caps stay empty','Weeks1–8 cover56days; final4days are separately supplied, not a full ninth week'],'units':{'temperature':'°C','precipitationRate':'mm/day'},'gridCoordinates':coords,'sources':[r[4]['source'] for r in results],'provenance':[r[4] for r in results],'weeks':[]}
  def interval(a,b,w):
   o={'week':w,'intervalStart':(INIT+dt.timedelta(hours=a*6)).isoformat(),'intervalEndExclusive':(INIT+dt.timedelta(hours=b*6)).isoformat(),'firstSampleHour':(a+1)*6,'lastSampleHour':b*6,'sampleCountPerMember':b-a,'memberCount':len(members)}
   for var,key in [('tmp2m','temperature'),('prate','precipitationRate')]:
@@ -149,6 +156,15 @@ if __name__=='__main__':
   return o
  for w in range(1,9):out['weeks'].append(interval((w-1)*28,w*28,w))
  if N>224:out['remainingDays57to60']=interval(224,N,9)
+ points=results[0][6];assert all(r[6]==points for r in results)
+ native_data={(r[0],r[1]):r[5] for r in results}
+ native={'schemaVersion':1,'run':out['run'],'memberIDs':members,'memberCount':len(members),'nativeGrid':'CFSv2 Gaussian 384 × 190 (~0.94° spacing)','method':'Nearest full native Gaussian node for a bounded city catalog. Same aligned member temporal means and empirical quantile method as map. No downscaling or bias correction.','locations':points,'periods':[]}
+ for i,frame in enumerate(out['weeks']+[out['remainingDays57to60']]):
+  period={k:frame[k] for k in ('intervalStart','intervalEndExclusive','sampleCountPerMember')}
+  for var,key in [('tmp2m','temperature'),('prate','precipitationRate')]:
+   means=np.array([native_data[m,var][i] for m in members]);period[key]=member_quantiles(means);period.setdefault('memberMeans',{})[key]=means.tolist()
+  native['periods'].append(period)
+ out['nativePointForecasts']=native
  old=A.locations_file or ROOT.parents[1]/'dist'/'data'/'cfs-weekly-raw-60days.json'
  if old.exists():
   out['sampledLocations']=[]

@@ -11,13 +11,18 @@ def archive_product(product_path, archive_dir):
         locations=[]
         for loc in p['sampledLocations']:
             i=loc['gridIndex']; periods=[]
+            native=p.get('nativePointForecasts',{});native_index=next((j for j,n in enumerate(native.get('locations',[])) if n['name']==loc['name'] and n['requestedCoordinate']==loc['requestedCoordinate']),None) if native.get('run')==p['run'] else None
+            archive_loc=dict(loc)
+            if native_index is not None:
+                archive_loc={**native['locations'][native_index],'nativeCatalogIndex':native_index,'sampling':'Full native Gaussian node; no downscaling'}
             for w in frames:
                 period={k:w[k] for k in ['intervalStart','intervalEndExclusive','firstSampleHour','lastSampleHour','sampleCountPerMember']}
                 period['leadWeek']=w['week']
                 for field in ('temperature','precipitationRate'):
-                    period[field]={q:w[field][q][i] for q in ('p1','p5','p10','p50','p90','p95','p99') if q in w[field]}
+                    source=native['periods'][w['week']-1][field] if native_index is not None else w[field];index=native_index if native_index is not None else i
+                    period[field]={q:source[q][index] for q in ('p1','p5','p10','p50','p90','p95','p99') if q in source}
                 periods.append(period)
-            locations.append({**loc,'periods':periods})
+            locations.append({**archive_loc,'periods':periods})
         record={'schemaVersion':1,'archivedAt':dt.datetime.now(dt.timezone.utc).isoformat(),'run':p['run'],'sourceProductSha256':hashlib.sha256(data).hexdigest(),'memberCount':p['memberCount'],'model':p['model'],'sources':p['sources'],'units':p['units'],'method':p['method'],'locations':locations}
         # Preserve membership and source evidence for lagged products. Earlier
         # immutable four-member archives intentionally retain their original schema.

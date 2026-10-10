@@ -51,26 +51,26 @@ def main():
  cache=args.cache_dir;cache.mkdir(parents=True,exist_ok=True);args.output.parent.mkdir(parents=True,exist_ok=True)
  prefix=f'https://data.ecmwf.int/forecasts/{run[:8]}/{run[8:]}z/aifs-single/0p25/oper/'
  def index(lead):
-  stem=prefix+f'{run}0000-{lead}h-oper-fc'; rows=[json.loads(s) for s in get(stem+'.index').decode().splitlines() if s.strip()]
+  stem=prefix+f'{run}0000-{lead}h-oper-fc'
+  cached=cache/f'aifs.{run}.{lead}.index'
+  body=cached.read_bytes() if cached.exists() else get(stem+'.index')
+  rows=[json.loads(s) for s in body.decode().splitlines() if s.strip()]
+  if not cached.exists():cached.write_bytes(body)
   jobs=[]
   for param in ('2t','tp'):
    chosen=[r for r in rows if r.get('param')==param];assert len(chosen)==1,(lead,param)
    row=chosen[0];jobs.append(dict(run=run,lead=lead,param=param,source=stem+'.grib2',indexSource=stem+'.index',offset=int(row['_offset']),bytes=int(row['_length'])))
   return jobs
- with concurrent.futures.ThreadPoolExecutor(max_workers=4) as pool:jobs=sum(list(pool.map(index,LEADS)),[])
+ with concurrent.futures.ThreadPoolExecutor(max_workers=1) as pool:jobs=sum(list(pool.map(index,LEADS)),[])
  def download(j):
   path=cache/f'aifs.{run}.{j["lead"]}.{j["param"]}.grib2'
   if not path.exists() or path.stat().st_size!=j['bytes']:
-   for attempt in range(3):
-    try:data=get(j['source'],j['offset'],j['bytes']);break
-    except Exception:
-     if attempt==2:raise
-     time.sleep(2)
+   data=get(j['source'],j['offset'],j['bytes'])
    assert data[:4]==b'GRIB' and data[-4:]==b'7777';path.write_bytes(data)
   j['sha256']=hashlib.sha256(path.read_bytes()).hexdigest();j['cacheFile']=path.name
   print('Downloaded',j['lead'],j['param'],flush=True)
   return path
- with concurrent.futures.ThreadPoolExecutor(max_workers=4) as pool:paths=list(pool.map(download,jobs))
+ with concurrent.futures.ThreadPoolExecutor(max_workers=1) as pool:paths=list(pool.map(download,jobs))
  # Build unchanged legacy representation from only original leads.
  import subprocess
  legacy=args.output.with_suffix('.legacy-stage.json')
